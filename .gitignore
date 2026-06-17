@@ -1,0 +1,20 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## Build / publish
+publish/
+*.binlog
+
+## Env / secrets
+*.env
+appsettings.*.local.json
+secrets.json

@@ -1,0 +1,86 @@
+@page "/ticker"
+@implements IAsyncDisposable
+@inject StockHubClient Hub
+
+<PageTitle>Live Ticker</PageTitle>
+
+<h1>Live Ticker</h1>
+
+<div class="controls">
+    <input @bind="symbol" placeholder="Symbol e.g. AAPL" />
+    <button @onclick="SubscribeAsync" disabled="@(!connected)">Subscribe</button>
+    <span class="status">@statusText</span>
+</div>
+
+@if (ticks.Count == 0)
+{
+    <p><em>No ticks yet. Subscribe to a symbol to start streaming.</em></p>
+}
+else
+{
+    <table class="ticks">
+        <thead>
+            <tr><th>Symbol</th><th>Price</th><th>Change</th><th>%</th><th>Time (UTC)</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var t in ticks)
+            {
+                <tr>
+                    <td>@t.Symbol</td>
+                    <td>@t.Price.ToString("N2")</td>
+                    <td class="@(t.Change >= 0 ? "up" : "down")">@t.Change.ToString("N2")</td>
+                    <td class="@(t.Change >= 0 ? "up" : "down")">@t.ChangePercent.ToString("N2")%</td>
+                    <td>@t.TimestampUtc.ToString("HH:mm:ss")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private string symbol = "AAPL";
+    private bool connected;
+    private string statusText = "Connecting…";
+    private readonly List<StockTick> ticks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.TickReceived += OnTick;
+        try
+        {
+            await Hub.ConnectAsync();
+            connected = true;
+            statusText = "Connected";
+        }
+        catch (Exception ex)
+        {
+            statusText = $"Connection failed: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private async Task SubscribeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(symbol))
+            return;
+        await Hub.SubscribeAsync(symbol.Trim().ToUpperInvariant());
+        statusText = $"Subscribed to {symbol.ToUpperInvariant()}";
+    }
+
+    private void OnTick(StockTick tick)
+    {
+        InvokeAsync(() =>
+        {
+            ticks.Insert(0, tick);
+            if (ticks.Count > 50)
+                ticks.RemoveAt(ticks.Count - 1);
+            StateHasChanged();
+        });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.TickReceived -= OnTick;
+        await Hub.DisposeAsync();
+    }
+}
