@@ -1,0 +1,8 @@
+[build]
+command = "dotnet publish src/StockSight.Web/StockSight.Web.csproj --configuration Release --output artifacts/web"
+publish = "artifacts/web/wwwroot"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

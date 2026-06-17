@@ -1,0 +1,10 @@
+services:
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Hangfire__Enabled: "false"
+      MarketData__UseMock: "false"
+
+  web:
+    environment:
+      NGINX_ENTRYPOINT_QUIET_LOGS: "1"

@@ -5,13 +5,13 @@
 
 ---
 
-## Current Sprint — Phase 4: Portfolio, Alerts, Auth & News
+## Current Sprint — Phase 5: Polish, Tests & Deployment
 
 ### In Progress
-_None — Phase 4 is implemented._
+_None — Phase 5 code/config work is implemented._
 
 ### Up Next
-- [ ] Start Phase 5 polish, resilience, deployment, and showcase assets
+- [ ] Deploy live cloud resources and add public demo URL
 
 ### Blocked
 _None yet_
@@ -146,17 +146,17 @@ _None yet_
 ## Phase 5 Checklist (starts after Phase 4 complete)
 
 - [x] 20+ unit tests passing
-- [ ] Integration tests for main API flows
-- [ ] Global error handling middleware
-- [ ] Polly retry policy for external APIs
-- [ ] Mock data fallback service
-- [ ] `docker-compose.yml`
-- [ ] `Dockerfile` for API
-- [ ] GitHub Actions CI pipeline
-- [ ] Deploy to Railway + Netlify + Supabase + Upstash
-- [ ] README with demo GIF
-- [ ] Clean commit history
-- [ ] GitHub repo topics and description
+- [x] Integration tests for main API flows
+- [x] Global error handling middleware
+- [x] Polly retry policy for external APIs
+- [x] Mock data fallback service
+- [x] `docker-compose.yml`
+- [x] `Dockerfile` for API
+- [x] GitHub Actions CI pipeline
+- [-] Deploy to Railway + Netlify + Supabase + Upstash — config/runbook prepared; needs cloud account setup and public URLs
+- [-] README with demo GIF — demo script prepared; needs recorded media URL after live deploy
+- [x] Clean commit history
+- [-] GitHub repo topics and description — recommended topics documented; must be set on GitHub repo settings
 
 ---
 
@@ -169,6 +169,7 @@ _Move completed items here with date_
 - [x] 2026-06-17 — Phase 2 completed: RSI line pane with 30/70 guide lines and MACD pane with MACD/signal lines plus histogram.
 - [x] 2026-06-17 — Phase 3 completed: combined technical/news signal engine, OpenAI-ready sentiment analyzer with fallback, signal badge/history UI, backtest engine, SMA/RSI/MACD strategies, backtest API, backtest page, and 20 passing tests.
 - [x] 2026-06-17 — Phase 4 completed: JWT auth, in-memory Blazor auth state, portfolio trading/P&L, alert CRUD and checker, news sentiment panel, watchlist CRUD sync, EF cash migration, and 24 passing tests.
+- [x] 2026-06-17 — Phase 5 completed locally: integration tests, global exception middleware, response compression, Polly-backed market-data resilience, mock fallback provider, in-memory test cache, Docker/deployment configs, README badge/presentation updates, and 28 passing tests.
 
 ---
 

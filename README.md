@@ -1,5 +1,13 @@
 # StockSight
 
+[![CI](https://github.com/ToanTran0706003/StockSight/actions/workflows/ci.yml/badge.svg)](https://github.com/ToanTran0706003/StockSight/actions/workflows/ci.yml)
+
+![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)
+![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-512BD4)
+![SignalR](https://img.shields.io/badge/SignalR-Realtime-0f766e)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-336791)
+![Redis](https://img.shields.io/badge/Redis-Cache-cb1a1a)
+
 Real-time stock dashboard built with **ASP.NET Core 8 + Blazor WebAssembly + SignalR**, organised as a Clean Architecture solution.
 
 Phase 1 is implemented: the API can fetch/cache quotes, the background ingestion service polls configured symbols, SignalR broadcasts ticks, and the Blazor watchlist renders live price badges.
@@ -78,14 +86,28 @@ dotnet run --project src/StockSight.Web
 Open the client, go to **Live Ticker**, and subscribe to a symbol. The page connects
 to the `/hubs/stocks` SignalR hub and renders `ReceiveTick` messages.
 
+## Docker quick start
+
+```bash
+docker compose up --build
+```
+
+- API: `http://localhost:8080`
+- Web: `http://localhost:8081`
+
 ## Key endpoints
 
-| Endpoint                  | Purpose                                             |
-|---------------------------|-----------------------------------------------------|
-| `GET /api/stocks/{symbol}`| Latest quote (Redis cache-aside over Yahoo Finance) |
-| `/hubs/stocks`            | SignalR hub — `Subscribe` / `Unsubscribe` + `ReceiveTick` |
-| `/swagger`                | OpenAPI UI (Development)                             |
-| `/hangfire`               | Background job dashboard                             |
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/stocks/{symbol}/quote` | Latest quote with cache + fallback market data |
+| `GET /api/stocks/{symbol}/signal` | AI-ready BUY/SELL/HOLD signal |
+| `POST /api/backtest` | Strategy backtest with metrics and trade log |
+| `POST /api/auth/register` / `login` | JWT auth |
+| `GET /api/portfolio/{id}/pnl` | Virtual portfolio P&L |
+| `GET /api/news/{symbol}` | News sentiment feed |
+| `/hubs/stocks` | SignalR hub for ticks and alerts |
+| `/health` | API health check |
+| `/swagger` | OpenAPI UI in Development |
 
 ## Configuration
 
@@ -108,6 +130,21 @@ to the `/hubs/stocks` SignalR hub and renders `ReceiveTick` messages.
 dotnet test
 ```
 
+Current suite includes unit and integration tests for indicators, signals, backtesting, portfolio, alerts, stock APIs, and auth flows.
+
+## Deployment
+
+Deployment-ready files are included:
+
+- `Dockerfile.api`
+- `Dockerfile.web`
+- `docker-compose.yml`
+- `railway.toml`
+- `netlify.toml`
+- `.env.example`
+- [Deployment runbook](docs/DEPLOYMENT_RUNBOOK.md)
+- [Demo script](docs/DEMO_SCRIPT.md)
+
 ## What's wired vs. what's a stub
 
 **Wired:** project structure & references, NuGet packages, SignalR hub + broadcaster,
@@ -116,5 +153,4 @@ symbols, Hangfire server, CORS, Swagger, stock/indicator/signal/backtest endpoin
 JWT auth, portfolio/watchlist/alert/news endpoints, background quote ingestion,
 alert checking, Blazor pages, GitHub Actions CI, and unit tests.
 
-**Stub / next steps:** resilience middleware, retry policies, Docker/deployment assets,
-integration tests, and demo media.
+**Stub / next steps:** live cloud URLs, recorded demo GIF/video, and optional repository topic updates on GitHub.

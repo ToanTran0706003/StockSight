@@ -1,0 +1,17 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY StockSight.sln ./
+COPY src/StockSight.Core/StockSight.Core.csproj src/StockSight.Core/
+COPY src/StockSight.Web/StockSight.Web.csproj src/StockSight.Web/
+RUN dotnet restore src/StockSight.Web/StockSight.Web.csproj
+
+COPY src src
+RUN dotnet publish src/StockSight.Web/StockSight.Web.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /app/publish
+
+FROM nginx:1.27-alpine AS runtime
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
+EXPOSE 80

@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY StockSight.sln ./
+COPY src/StockSight.Core/StockSight.Core.csproj src/StockSight.Core/
+COPY src/StockSight.Infrastructure/StockSight.Infrastructure.csproj src/StockSight.Infrastructure/
+COPY src/StockSight.API/StockSight.API.csproj src/StockSight.API/
+RUN dotnet restore src/StockSight.API/StockSight.API.csproj
+
+COPY src src
+RUN dotnet publish src/StockSight.API/StockSight.API.csproj \
+    --configuration Release \
+    --no-restore \
+    --output /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "StockSight.API.dll"]

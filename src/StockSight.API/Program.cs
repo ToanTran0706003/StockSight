@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Text;
 using StockSight.API.BackgroundServices;
 using StockSight.API.Hubs;
+using StockSight.API.Middleware;
 using StockSight.Core.Interfaces;
 using StockSight.Infrastructure;
 using StockSight.Infrastructure.Data;
@@ -18,6 +19,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddResponseCompression();
 
 // ---- Auth ----
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "stocksight-local-dev-secret-key-change-me";
@@ -51,7 +53,8 @@ builder.Services.AddHostedService<AlertCheckerService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ---- Hangfire (PostgreSQL storage) ----
-var hangfireEnabled = builder.Configuration.GetValue("Hangfire:Enabled", true);
+var hangfireEnabled = !builder.Environment.IsEnvironment("Testing") &&
+                      builder.Configuration.GetValue("Hangfire:Enabled", true);
 if (hangfireEnabled)
 {
     var hangfireConn = builder.Configuration.GetConnectionString("Postgres");
@@ -75,6 +78,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -82,6 +87,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseResponseCompression();
 app.UseCors(CorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
@@ -98,3 +104,5 @@ if (builder.Configuration.GetValue("Data:UseInMemory", false))
 }
 
 app.Run();
+
+public partial class Program;
