@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using StockSight.Core.Indicators;
 using StockSight.Core.Interfaces;
 using StockSight.Core.Models;
 
@@ -93,5 +94,142 @@ public class StocksController : ControllerBase
 
         var results = await _provider.SearchSymbolsAsync(q, ct);
         return Ok(new { results });
+    }
+
+    [HttpGet("{symbol}/indicators/sma")]
+    public async Task<ActionResult<object>> GetSma(
+        string symbol,
+        [FromQuery] int period = 20,
+        [FromQuery] string interval = "1d",
+        CancellationToken ct = default)
+    {
+        var bars = await GetIndicatorBarsAsync(symbol, interval, period, ct);
+        var values = IndicatorCalculator.CalculateSma(bars, period);
+        return Ok(new
+        {
+            symbol = symbol.Trim().ToUpperInvariant(),
+            indicator = "SMA",
+            period,
+            values,
+            currentValue = values.LastOrDefault(p => p.Value.HasValue)?.Value
+        });
+    }
+
+    [HttpGet("{symbol}/indicators/ema")]
+    public async Task<ActionResult<object>> GetEma(
+        string symbol,
+        [FromQuery] int period = 50,
+        [FromQuery] string interval = "1d",
+        CancellationToken ct = default)
+    {
+        var bars = await GetIndicatorBarsAsync(symbol, interval, period, ct);
+        var values = IndicatorCalculator.CalculateEma(bars, period);
+        return Ok(new
+        {
+            symbol = symbol.Trim().ToUpperInvariant(),
+            indicator = "EMA",
+            period,
+            values,
+            currentValue = values.LastOrDefault(p => p.Value.HasValue)?.Value
+        });
+    }
+
+    [HttpGet("{symbol}/indicators/rsi")]
+    public async Task<ActionResult<object>> GetRsi(
+        string symbol,
+        [FromQuery] int period = 14,
+        [FromQuery] string interval = "1d",
+        CancellationToken ct = default)
+    {
+        var bars = await GetIndicatorBarsAsync(symbol, interval, period + 1, ct);
+        var values = IndicatorCalculator.CalculateRsi(bars, period);
+        var currentValue = values.LastOrDefault(p => p.Value.HasValue)?.Value;
+        return Ok(new
+        {
+            symbol = symbol.Trim().ToUpperInvariant(),
+            indicator = "RSI",
+            period,
+            values,
+            currentValue,
+            signal = currentValue switch
+            {
+                < 30m => "Oversold",
+                > 70m => "Overbought",
+                _ => "Neutral"
+            }
+        });
+    }
+
+    [HttpGet("{symbol}/indicators/macd")]
+    public async Task<ActionResult<object>> GetMacd(
+        string symbol,
+        [FromQuery] int fast = 12,
+        [FromQuery] int slow = 26,
+        [FromQuery] int signal = 9,
+        [FromQuery] string interval = "1d",
+        CancellationToken ct = default)
+    {
+        var bars = await GetIndicatorBarsAsync(symbol, interval, slow + signal, ct);
+        var values = IndicatorCalculator.CalculateMacd(bars, fast, slow, signal);
+        var current = values.LastOrDefault(p => p.Macd.HasValue && p.Signal.HasValue);
+        return Ok(new
+        {
+            symbol = symbol.Trim().ToUpperInvariant(),
+            indicator = "MACD",
+            fast,
+            slow,
+            signal,
+            values,
+            currentMacd = current?.Macd,
+            currentSignal = current?.Signal,
+            currentHistogram = current?.Histogram
+        });
+    }
+
+    [HttpGet("{symbol}/indicators/bollinger")]
+    public async Task<ActionResult<object>> GetBollinger(
+        string symbol,
+        [FromQuery] int period = 20,
+        [FromQuery] decimal stdDev = 2m,
+        [FromQuery] string interval = "1d",
+        CancellationToken ct = default)
+    {
+        var bars = await GetIndicatorBarsAsync(symbol, interval, period, ct);
+        var values = IndicatorCalculator.CalculateBollingerBands(bars, period, stdDev);
+        var current = values.LastOrDefault(p => p.Middle.HasValue);
+        return Ok(new
+        {
+            symbol = symbol.Trim().ToUpperInvariant(),
+            indicator = "Bollinger",
+            period,
+            stdDev,
+            values,
+            currentMiddle = current?.Middle,
+            currentUpper = current?.Upper,
+            currentLower = current?.Lower
+        });
+    }
+
+    private async Task<IReadOnlyList<OhlcvBar>> GetIndicatorBarsAsync(
+        string symbol,
+        string interval,
+        int minimumPeriod,
+        CancellationToken ct)
+    {
+        symbol = symbol.Trim().ToUpperInvariant();
+        DateTime toUtc = DateTime.UtcNow;
+        DateTime fromUtc = interval.Equals("1d", StringComparison.OrdinalIgnoreCase) ||
+                           interval.Equals("1w", StringComparison.OrdinalIgnoreCase)
+            ? toUtc.AddDays(-Math.Max(180, minimumPeriod * 4))
+            : toUtc.AddDays(-30);
+
+        string cacheKey = $"ohlcv:{symbol}:{interval}:indicators";
+        var cached = await _cache.GetAsync<IReadOnlyList<OhlcvBar>>(cacheKey, ct);
+        if (cached is not null)
+            return cached;
+
+        var bars = await _provider.GetOhlcvAsync(symbol, interval, fromUtc, toUtc, ct);
+        await _cache.SetAsync(cacheKey, bars, TimeSpan.FromMinutes(5), ct);
+        return bars;
     }
 }

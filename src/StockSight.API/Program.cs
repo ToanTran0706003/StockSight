@@ -22,13 +22,17 @@ builder.Services.AddHostedService<StockDataIngestionService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ---- Hangfire (PostgreSQL storage) ----
-var hangfireConn = builder.Configuration.GetConnectionString("Postgres");
-builder.Services.AddHangfire(cfg => cfg
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(hangfireConn)));
-builder.Services.AddHangfireServer();
+var hangfireEnabled = builder.Configuration.GetValue("Hangfire:Enabled", true);
+if (hangfireEnabled)
+{
+    var hangfireConn = builder.Configuration.GetConnectionString("Postgres");
+    builder.Services.AddHangfire(cfg => cfg
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(hangfireConn)));
+    builder.Services.AddHangfireServer();
+}
 
 // ---- CORS for the Blazor WASM client ----
 const string CorsPolicy = "BlazorClient";
@@ -53,6 +57,7 @@ app.UseCors(CorsPolicy);
 
 app.MapControllers();
 app.MapHub<StockHub>("/hubs/stocks");
-app.UseHangfireDashboard("/hangfire");
+if (hangfireEnabled)
+    app.UseHangfireDashboard("/hangfire");
 
 app.Run();

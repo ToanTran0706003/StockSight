@@ -19,7 +19,7 @@
         var tick = latest.GetValueOrDefault(symbol);
         <article class="quote-card">
             <div>
-                <h2>@symbol</h2>
+                <h2><NavLink href="@($"stock/{symbol}")">@symbol</NavLink></h2>
                 <span class="status">Live quote</span>
             </div>
             @if (tick is null)

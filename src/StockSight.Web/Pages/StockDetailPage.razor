@@ -1,0 +1,257 @@
+@page "/stock/{Symbol}"
+@implements IAsyncDisposable
+@inject HttpClient Http
+@inject StockHubClient Hub
+
+<PageTitle>@Symbol - StockSight</PageTitle>
+
+<section class="stock-header">
+    <div>
+        <h1>@symbol</h1>
+        <p>@(info?.CompanyName ?? "Loading company info")</p>
+    </div>
+    <div class="quote-summary">
+        @if (quote is null)
+        {
+            <strong class="price">Loading</strong>
+        }
+        else
+        {
+            <strong class="price">@quote.Price.ToString("N2")</strong>
+            <span class="@(quote.Change >= 0 ? "up" : "down")">
+                @quote.Change.ToString("N2") (@quote.ChangePercent.ToString("N2")%)
+            </span>
+        }
+    </div>
+</section>
+
+<section class="tool-strip">
+    <div class="segmented">
+        @foreach (var option in intervals)
+        {
+            <button class="@(interval == option ? "active" : null)" @onclick="() => ChangeIntervalAsync(option)">
+                @option
+            </button>
+        }
+    </div>
+    <label><input type="checkbox" @bind="showSma" @bind:after="ReloadIndicatorsAsync" /> SMA 20</label>
+    <label><input type="checkbox" @bind="showEma" @bind:after="ReloadIndicatorsAsync" /> EMA 50</label>
+    <label><input type="checkbox" @bind="showBollinger" @bind:after="ReloadIndicatorsAsync" /> Bollinger</label>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="error">@error</p>
+}
+
+<ChartComponent @ref="chart" Bars="bars" Lines="chartLines" />
+
+<section class="indicator-summary">
+    <article>
+        <span class="status">RSI 14</span>
+        <strong>@Display(rsi?.CurrentValue)</strong>
+        <span>@(rsi?.Signal ?? "Neutral")</span>
+    </article>
+    <article>
+        <span class="status">MACD</span>
+        <strong>@Display(macd?.CurrentMacd)</strong>
+        <span>Signal @Display(macd?.CurrentSignal)</span>
+    </article>
+    <article>
+        <span class="status">Market</span>
+        <strong>@(info?.Exchange ?? "Yahoo Finance")</strong>
+        <span>@interval candles</span>
+    </article>
+</section>
+
+@code {
+    [Parameter]
+    public string Symbol { get; set; } = "AAPL";
+
+    private readonly string[] intervals = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
+    private string symbol = "AAPL";
+    private string interval = "1d";
+    private bool showSma = true;
+    private bool showEma;
+    private bool showBollinger = true;
+    private string? error;
+
+    private ChartComponent? chart;
+    private StockInfo? info;
+    private StockTick? quote;
+    private RsiResponse? rsi;
+    private MacdResponse? macd;
+    private IReadOnlyList<OhlcvBar> bars = Array.Empty<OhlcvBar>();
+    private Dictionary<string, ChartComponent.ChartLine> chartLines = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        symbol = Clean(Symbol);
+        Hub.TickReceived += OnTick;
+
+        try
+        {
+            await Hub.ConnectAsync();
+            await Hub.SubscribeAsync(symbol);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var nextSymbol = Clean(Symbol);
+        if (nextSymbol == symbol)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(symbol))
+            await Hub.UnsubscribeAsync(symbol);
+
+        symbol = nextSymbol;
+        await Hub.SubscribeAsync(symbol);
+        await LoadAsync();
+    }
+
+    private async Task ChangeIntervalAsync(string next)
+    {
+        if (interval == next)
+            return;
+
+        interval = next;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        try
+        {
+            info = await Http.GetFromJsonAsync<StockInfo>($"api/stocks/{symbol}/info");
+            quote = await Http.GetFromJsonAsync<StockTick>($"api/stocks/{symbol}/quote");
+
+            var from = DateTime.UtcNow.AddDays(interval switch
+            {
+                "1m" => -1,
+                "5m" => -2,
+                "15m" => -5,
+                "1h" => -14,
+                "4h" => -45,
+                "1w" => -730,
+                _ => -180
+            });
+            var ohlcv = await Http.GetFromJsonAsync<OhlcvResponse>(
+                $"api/stocks/{symbol}/ohlcv?interval={interval}&from={Uri.EscapeDataString(from.ToString("O"))}");
+            bars = ohlcv?.Bars ?? Array.Empty<OhlcvBar>();
+
+            rsi = await Http.GetFromJsonAsync<RsiResponse>($"api/stocks/{symbol}/indicators/rsi?interval={interval}");
+            macd = await Http.GetFromJsonAsync<MacdResponse>($"api/stocks/{symbol}/indicators/macd?interval={interval}");
+            await ReloadIndicatorsAsync();
+        }
+        catch (Exception ex)
+        {
+            error = $"Unable to load {symbol}: {ex.Message}";
+        }
+    }
+
+    private async Task ReloadIndicatorsAsync()
+    {
+        var lines = new Dictionary<string, ChartComponent.ChartLine>();
+
+        if (showSma)
+        {
+            var response = await Http.GetFromJsonAsync<IndicatorResponse>($"api/stocks/{symbol}/indicators/sma?period=20&interval={interval}");
+            if (response?.Values is not null)
+                lines["SMA 20"] = new ChartComponent.ChartLine(response.Values, "#38bdf8");
+        }
+
+        if (showEma)
+        {
+            var response = await Http.GetFromJsonAsync<IndicatorResponse>($"api/stocks/{symbol}/indicators/ema?period=50&interval={interval}");
+            if (response?.Values is not null)
+                lines["EMA 50"] = new ChartComponent.ChartLine(response.Values, "#f59e0b");
+        }
+
+        if (showBollinger)
+        {
+            var response = await Http.GetFromJsonAsync<BollingerResponse>($"api/stocks/{symbol}/indicators/bollinger?period=20&interval={interval}");
+            if (response?.Values is not null)
+            {
+                lines["BB Upper"] = new ChartComponent.ChartLine(
+                    response.Values.Select(p => new IndicatorPoint(p.TimestampUtc, p.Upper)).ToArray(),
+                    "#a78bfa");
+                lines["BB Lower"] = new ChartComponent.ChartLine(
+                    response.Values.Select(p => new IndicatorPoint(p.TimestampUtc, p.Lower)).ToArray(),
+                    "#a78bfa");
+            }
+        }
+
+        chartLines = lines;
+        StateHasChanged();
+    }
+
+    private void OnTick(StockTick tick)
+    {
+        if (!Clean(tick.Symbol).Equals(symbol, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        InvokeAsync(async () =>
+        {
+            quote = tick;
+            if (chart is not null)
+                await chart.UpdateTickAsync(tick);
+            StateHasChanged();
+        });
+    }
+
+    private static string Clean(string value) => value.Trim().ToUpperInvariant();
+
+    private static string Display(decimal? value) => value?.ToString("N2") ?? "--";
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.TickReceived -= OnTick;
+        await Hub.UnsubscribeAsync(symbol);
+        await Hub.DisposeAsync();
+    }
+
+    private record OhlcvResponse(string Symbol, string Interval, IReadOnlyList<OhlcvBar> Bars);
+
+    private record IndicatorResponse(
+        string Symbol,
+        string Indicator,
+        int Period,
+        IReadOnlyList<IndicatorPoint> Values,
+        decimal? CurrentValue);
+
+    private record RsiResponse(
+        string Symbol,
+        string Indicator,
+        int Period,
+        IReadOnlyList<IndicatorPoint> Values,
+        decimal? CurrentValue,
+        string Signal);
+
+    private record MacdResponse(
+        string Symbol,
+        string Indicator,
+        int Fast,
+        int Slow,
+        int Signal,
+        IReadOnlyList<MacdPoint> Values,
+        decimal? CurrentMacd,
+        decimal? CurrentSignal,
+        decimal? CurrentHistogram);
+
+    private record BollingerResponse(
+        string Symbol,
+        string Indicator,
+        int Period,
+        decimal StdDev,
+        IReadOnlyList<BollingerPoint> Values,
+        decimal? CurrentMiddle,
+        decimal? CurrentUpper,
+        decimal? CurrentLower);
+}

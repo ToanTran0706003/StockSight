@@ -11,8 +11,8 @@
 _None — Phase 1 foundation is implemented._
 
 ### Up Next
-- [ ] Smoke-test live app with local PostgreSQL + Redis running
-- [ ] Start Phase 2 charts + indicators
+- [ ] Add RSI/MACD sub-pane chart rendering
+- [ ] Start Phase 3 AI signals + backtesting
 
 ### Blocked
 _None yet_
@@ -105,15 +105,16 @@ _None yet_
 
 ## Phase 2 Checklist (starts after Phase 1 complete)
 
-- [ ] TradingView Lightweight Charts via CDN
-- [ ] `ChartComponent.razor` + JS interop file
-- [ ] `initChart`, `loadOhlcvData`, `addRealtimeTick` JS functions
-- [ ] Interval selector (1m, 5m, 15m, 1h, 1D)
-- [ ] `IndicatorCalculator.cs` — SMA, EMA, RSI, MACD, Bollinger
-- [ ] Unit tests for all indicator calculations
-- [ ] Indicator API endpoints
-- [ ] Toggle panel for indicator overlays
-- [ ] Full stock detail page
+- [x] TradingView Lightweight Charts via CDN
+- [x] `ChartComponent.razor` + JS interop file
+- [x] `initChart`, `loadOhlcvData`, `addRealtimeTick` JS functions
+- [x] Interval selector (1m, 5m, 15m, 1h, 4h, 1D, 1W)
+- [x] `IndicatorCalculator.cs` — SMA, EMA, RSI, MACD, Bollinger
+- [x] Unit tests for all indicator calculations
+- [x] Indicator API endpoints
+- [x] Toggle panel for indicator overlays
+- [ ] RSI and MACD render in sub-pane below main chart
+- [x] Full stock detail page
 
 ---
 
@@ -165,6 +166,7 @@ _None yet_
 _Move completed items here with date_
 
 - [x] 2026-06-17 — Phase 1 foundation implemented: Core models/interfaces, Yahoo provider, Redis cache/pub-sub, EF migration + seed data, SignalR hub, ingestion background service, REST stock endpoints, health endpoint, Blazor watchlist, and GitHub Actions CI.
+- [x] 2026-06-17 — Phase 2 chart foundation implemented: TradingView Lightweight Charts interop, stock detail page, interval selector, SMA/EMA/Bollinger overlays, RSI/MACD summary, indicator API endpoints, fallback market data, and indicator unit tests.
 
 ---
 

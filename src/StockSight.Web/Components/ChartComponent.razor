@@ -1,0 +1,59 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div id="@ElementId" class="chart-host"></div>
+
+@code {
+    private readonly string ElementId = $"chart-{Guid.NewGuid():N}";
+    private bool initialized;
+    private bool pendingRender = true;
+
+    [Parameter]
+    public IReadOnlyList<OhlcvBar> Bars { get; set; } = Array.Empty<OhlcvBar>();
+
+    [Parameter]
+    public IReadOnlyDictionary<string, ChartLine> Lines { get; set; } = new Dictionary<string, ChartLine>();
+
+    protected override void OnParametersSet()
+    {
+        pendingRender = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("stockSightCharts.createChart", ElementId);
+            initialized = true;
+        }
+
+        if (initialized && pendingRender)
+        {
+            pendingRender = false;
+            await RenderAsync();
+        }
+    }
+
+    public async Task UpdateTickAsync(StockTick tick)
+    {
+        if (initialized)
+            await JS.InvokeVoidAsync("stockSightCharts.updateTick", ElementId, tick);
+    }
+
+    private async Task RenderAsync()
+    {
+        await JS.InvokeVoidAsync("stockSightCharts.setCandles", ElementId, Bars);
+        await JS.InvokeVoidAsync("stockSightCharts.clearLines", ElementId);
+
+        foreach (var (name, line) in Lines)
+            await JS.InvokeVoidAsync("stockSightCharts.setLine", ElementId, name, line.Points, line.Color);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (initialized)
+            await JS.InvokeVoidAsync("stockSightCharts.disposeChart", ElementId);
+    }
+
+    public record ChartLine(IReadOnlyList<IndicatorPoint> Points, string Color);
+}
