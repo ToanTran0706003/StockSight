@@ -304,20 +304,15 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 
 **Response 200:**
 ```json
-{
-  "portfolios": [
-    {
-      "id": "uuid",
-      "name": "My Portfolio",
-      "initialCash": 10000.00,
-      "availableCash": 4230.50,
-      "currentValue": 12450.80,
-      "totalPnL": 2450.80,
-      "totalPnLPercent": 24.5,
-      "positionCount": 3
-    }
-  ]
-}
+[
+  {
+    "id": "uuid",
+    "name": "My Portfolio",
+    "initialCash": 10000.00,
+    "cashBalance": 4230.50,
+    "positions": []
+  }
+]
 ```
 
 ### POST /api/portfolio
@@ -332,14 +327,22 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 ```
 
 ### GET /api/portfolio/{id}
-🔒 Auth required. Get portfolio detail with positions and P&L.
+🔒 Auth required. Get portfolio detail.
+
+### GET /api/portfolio/{id}/pnl
+🔒 Auth required. Get portfolio P&L snapshot with current prices.
 
 **Response 200:**
 ```json
 {
-  "id": "uuid",
+  "portfolioId": "uuid",
   "name": "My Portfolio",
-  "availableCash": 4230.50,
+  "initialCash": 10000.00,
+  "cashBalance": 4230.50,
+  "marketValue": 8220.30,
+  "totalValue": 12450.80,
+  "totalPnL": 2450.80,
+  "totalPnLPercent": 24.5,
   "positions": [
     {
       "symbol": "AAPL",
@@ -347,14 +350,10 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
       "averageCost": 175.20,
       "currentPrice": 182.45,
       "marketValue": 1824.50,
-      "unrealizedPnL": 72.50,
-      "unrealizedPnLPercent": 4.14,
-      "weight": 15.4
+      "pnl": 72.50,
+      "pnlPercent": 4.14
     }
-  ],
-  "totalValue": 12450.80,
-  "totalPnL": 2450.80,
-  "totalPnLPercent": 24.5
+  ]
 }
 ```
 
@@ -365,7 +364,8 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 ```json
 {
   "symbol": "AAPL",
-  "shares": 5
+  "shares": 5,
+  "price": 182.45
 }
 ```
 
@@ -374,9 +374,7 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 {
   "symbol": "AAPL",
   "shares": 5,
-  "pricePerShare": 182.45,
-  "totalCost": 912.25,
-  "remainingCash": 3318.25
+  "averageCost": 182.45
 }
 ```
 
@@ -389,7 +387,8 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 ```json
 {
   "symbol": "AAPL",
-  "shares": 3
+  "shares": 3,
+  "price": 185.00
 }
 ```
 
@@ -404,19 +403,17 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 
 **Response 200:**
 ```json
-{
-  "alerts": [
-    {
-      "id": "uuid",
-      "symbol": "AAPL",
-      "targetPrice": 190.00,
-      "direction": "Above",
-      "isActive": true,
-      "isTriggered": false,
-      "createdAt": "2024-11-01T10:00:00Z"
-    }
-  ]
-}
+[
+  {
+    "id": "uuid",
+    "symbol": "AAPL",
+    "targetPrice": 190.00,
+    "direction": "Above",
+    "isTriggered": false,
+    "createdUtc": "2024-11-01T10:00:00Z",
+    "triggeredUtc": null
+  }
+]
 ```
 
 ### POST /api/alerts
@@ -427,9 +424,7 @@ Available strategies: `SmaCrossover`, `RsiReversal`, `Macd`
 {
   "symbol": "AAPL",
   "targetPrice": 190.00,
-  "direction": "Above",
-  "notifyEmail": true,
-  "notifyPush": true
+  "direction": "Above"
 }
 ```
 
@@ -447,20 +442,17 @@ Get recent news with sentiment analysis for a symbol.
 
 **Response 200:**
 ```json
-{
-  "symbol": "AAPL",
-  "articles": [
-    {
-      "title": "Apple reports record Q4 earnings",
-      "source": "Reuters",
-      "publishedAt": "2024-11-01T18:00:00Z",
-      "url": "https://...",
-      "sentiment": "Bullish",
-      "sentimentScore": 0.82,
-      "sentimentReason": "Strong earnings beat with record iPhone sales mentioned."
-    }
-  ]
-}
+[
+  {
+    "symbol": "AAPL",
+    "headline": "Apple reports record Q4 earnings",
+    "source": "Market Wire",
+    "publishedUtc": "2024-11-01T18:00:00Z",
+    "url": "https://...",
+    "sentiment": "Bullish",
+    "score": 0.82
+  }
+]
 ```
 
 ---

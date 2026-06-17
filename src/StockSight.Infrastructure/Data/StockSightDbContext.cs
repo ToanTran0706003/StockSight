@@ -61,6 +61,8 @@ public class StockSightDbContext : DbContext
             e.HasKey(p => p.Id);
             e.Property(p => p.Name).IsRequired().HasMaxLength(120);
             e.Property(p => p.OwnerId).IsRequired().HasMaxLength(128);
+            e.Property(p => p.InitialCash).HasPrecision(18, 4);
+            e.Property(p => p.CashBalance).HasPrecision(18, 4);
             e.HasMany(p => p.Holdings)
              .WithOne(h => h.Portfolio!)
              .HasForeignKey(h => h.PortfolioId)

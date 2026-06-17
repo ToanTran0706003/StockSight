@@ -1,0 +1,43 @@
+@inject HttpClient Http
+
+<section class="news-panel">
+    <h2>News Sentiment</h2>
+    @if (articles.Count == 0)
+    {
+        <p class="status">Loading news...</p>
+    }
+    else
+    {
+        @foreach (var article in articles)
+        {
+            <article>
+                <div>
+                    <strong>@article.Headline</strong>
+                    <span class="status">@article.Source · @article.PublishedUtc.ToString("MMM dd HH:mm") UTC</span>
+                </div>
+                <span class="sentiment @article.Sentiment.ToLowerInvariant()">@article.Sentiment @article.Score.ToString("N2")</span>
+            </article>
+        }
+    }
+</section>
+
+@code {
+    [Parameter]
+    public string Symbol { get; set; } = "AAPL";
+
+    private IReadOnlyList<NewsArticleDto> articles = Array.Empty<NewsArticleDto>();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        articles = await Http.GetFromJsonAsync<IReadOnlyList<NewsArticleDto>>($"api/news/{Symbol}") ?? Array.Empty<NewsArticleDto>();
+    }
+
+    private record NewsArticleDto(
+        string Symbol,
+        string Headline,
+        string Source,
+        DateTime PublishedUtc,
+        string Url,
+        string Sentiment,
+        decimal Score);
+}

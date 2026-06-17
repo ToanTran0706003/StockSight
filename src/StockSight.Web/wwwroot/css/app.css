@@ -27,13 +27,41 @@ body {
 
 .brand { font-weight: 700; font-size: 1.2rem; color: var(--accent); }
 
+.topbar nav {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .85rem;
+}
+
 .topbar nav a {
     color: var(--text);
     text-decoration: none;
-    margin-right: 1rem;
 }
 
 .topbar nav a.active { color: var(--accent); font-weight: 600; }
+
+.auth-nav {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    color: #94a3b8;
+}
+
+.auth-nav a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.auth-nav button,
+.link-button {
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    padding: .35rem .6rem;
+    cursor: pointer;
+}
 
 main { padding: 1.5rem; }
 
@@ -237,6 +265,49 @@ table.ticks th, table.ticks td {
     border-radius: 8px;
 }
 
+.notice {
+    color: #bbf7d0;
+    background: #14532d;
+    border: 1px solid #22c55e;
+    padding: .75rem;
+    border-radius: 8px;
+}
+
+.auth-panel {
+    display: grid;
+    gap: .75rem;
+    width: min(420px, 100%);
+    padding: 1rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.auth-panel label {
+    display: grid;
+    gap: .35rem;
+    color: #94a3b8;
+}
+
+.auth-panel input {
+    min-height: 38px;
+    padding: .45rem .6rem;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #0f172a;
+    color: var(--text);
+}
+
+.auth-panel button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #0f172a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .signal-badge {
     display: grid;
     grid-template-columns: minmax(160px, 220px) 1fr;
@@ -284,14 +355,52 @@ table.ticks th, table.ticks td {
 }
 
 .signal-history,
-.trade-log {
+.trade-log,
+.news-panel,
+.allocation-list {
     margin-top: 1rem;
 }
 
 .signal-history h2,
-.trade-log h2 {
+.trade-log h2,
+.news-panel h2 {
     font-size: 1.1rem;
 }
+
+.news-panel {
+    display: grid;
+    gap: .65rem;
+    margin-bottom: 1rem;
+}
+
+.news-panel article {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .75rem;
+    align-items: center;
+    padding: .75rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.news-panel strong {
+    display: block;
+    margin-bottom: .25rem;
+}
+
+.sentiment {
+    min-width: 90px;
+    text-align: center;
+    border-radius: 999px;
+    padding: .3rem .55rem;
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.sentiment.bullish { color: #bbf7d0; background: #14532d; }
+.sentiment.bearish { color: #fecaca; background: #7f1d1d; }
+.sentiment.neutral { color: #e2e8f0; background: #334155; }
 
 .backtest-form {
     display: grid;
@@ -345,6 +454,39 @@ table.ticks th, table.ticks td {
     display: block;
     margin-top: .25rem;
     font-size: 1.25rem;
+}
+
+.allocation-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: .75rem;
+}
+
+.allocation-list article {
+    padding: .75rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.allocation-list article > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .45rem;
+}
+
+@media (max-width: 720px) {
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .75rem;
+    }
+
+    .news-panel article,
+    .signal-badge {
+        grid-template-columns: 1fr;
+    }
 }
 
 #blazor-error-ui {

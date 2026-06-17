@@ -2,6 +2,7 @@
 @implements IAsyncDisposable
 @inject HttpClient Http
 @inject StockHubClient Hub
+@inject AuthStateProvider Auth
 
 <PageTitle>Watchlist</PageTitle>
 
@@ -22,6 +23,7 @@
                 <h2><NavLink href="@($"stock/{symbol}")">@symbol</NavLink></h2>
                 <span class="status">Live quote</span>
             </div>
+            <button class="link-button" @onclick="() => RemoveSymbolAsync(symbol)">Remove</button>
             @if (tick is null)
             {
                 <strong class="price">Loading</strong>
@@ -55,6 +57,7 @@
             connected = true;
             statusText = "Connected";
 
+            await LoadWatchlistAsync();
             foreach (var symbol in symbols.ToArray())
                 await SubscribeAndLoadAsync(symbol);
         }
@@ -70,9 +73,48 @@
         if (symbol.Length == 0 || symbols.Contains(symbol))
             return;
 
+        if (Auth.CurrentUser is not null)
+        {
+            var response = await Http.PostAsync($"api/watchlist/{symbol}", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                statusText = await response.Content.ReadAsStringAsync();
+                return;
+            }
+        }
+
         symbols.Add(symbol);
         await SubscribeAndLoadAsync(symbol);
         newSymbol = string.Empty;
+    }
+
+    private async Task RemoveSymbolAsync(string symbol)
+    {
+        if (Auth.CurrentUser is not null)
+            await Http.DeleteAsync($"api/watchlist/{symbol}");
+
+        symbols.Remove(symbol);
+        latest.Remove(symbol);
+    }
+
+    private async Task LoadWatchlistAsync()
+    {
+        if (Auth.CurrentUser is null)
+            return;
+
+        try
+        {
+            var items = await Http.GetFromJsonAsync<IReadOnlyList<WatchlistItem>>("api/watchlist");
+            if (items is { Count: > 0 })
+            {
+                symbols.Clear();
+                symbols.AddRange(items.Select(i => Clean(i.Symbol)));
+            }
+        }
+        catch
+        {
+            statusText = "Using local watchlist";
+        }
     }
 
     private async Task SubscribeAndLoadAsync(string symbol)

@@ -14,6 +14,10 @@ public class Portfolio
 
     public string Name { get; set; } = string.Empty;
 
+    public decimal InitialCash { get; set; }
+
+    public decimal CashBalance { get; set; }
+
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
     /// <summary>Positions held within this portfolio.</summary>

@@ -8,6 +8,8 @@ Phase 2 is implemented: stock detail pages render candlesticks with TradingView 
 
 Phase 3 is implemented: the app generates BUY/SELL/HOLD signals from technical rules plus news sentiment, displays signal confidence on stock detail pages, and runs backtests with SMA crossover, RSI reversal, and MACD strategies.
 
+Phase 4 is implemented: users can register/login with JWT, manage a persistent watchlist, trade in a virtual portfolio, track P&L, set price alerts, and read a news sentiment panel per ticker.
+
 ## Architecture
 
 ```
@@ -93,6 +95,8 @@ to the `/hubs/stocks` SignalR hub and renders `ReceiveTick` messages.
 - `Redis:ConnectionString` — StackExchange.Redis endpoint
 - `Cors:AllowedOrigins` — Blazor client origins
 - `OpenAI:ApiKey` — for AI features (left blank by default)
+- `Jwt:Secret` — signing secret for local JWT auth
+- `Data:UseInMemory` — optional local smoke-test mode when PostgreSQL is unavailable
 
 `src/StockSight.Web/wwwroot/appsettings.json`:
 
@@ -106,11 +110,11 @@ dotnet test
 
 ## What's wired vs. what's a stub
 
-**Wired:** project structure & references, NuGet packages, Phase 1 domain models,
-SignalR hub + broadcaster, Redis cache/pub-sub service, EF Core/PostgreSQL DbContext
-with `InitialCreate` migration and seed symbols, Hangfire server, CORS, Swagger,
-cache-aside stock endpoints, health endpoint, background quote ingestion, Blazor
-watchlist/live-ticker pages, GitHub Actions CI, and unit tests.
+**Wired:** project structure & references, NuGet packages, SignalR hub + broadcaster,
+Redis cache/pub-sub service, EF Core/PostgreSQL DbContext with migrations and seed
+symbols, Hangfire server, CORS, Swagger, stock/indicator/signal/backtest endpoints,
+JWT auth, portfolio/watchlist/alert/news endpoints, background quote ingestion,
+alert checking, Blazor pages, GitHub Actions CI, and unit tests.
 
-**Stub / next steps:** alert evaluation pipeline, portfolio CRUD endpoints,
-authentication, persistent news article UI, and production deployment.
+**Stub / next steps:** resilience middleware, retry policies, Docker/deployment assets,
+integration tests, and demo media.

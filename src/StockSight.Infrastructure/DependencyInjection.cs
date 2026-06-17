@@ -3,10 +3,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using StockSight.Core.Interfaces;
+using StockSight.Infrastructure.Alerts;
 using StockSight.Infrastructure.AI;
 using StockSight.Infrastructure.Caching;
 using StockSight.Infrastructure.Data;
 using StockSight.Infrastructure.MarketData;
+using StockSight.Infrastructure.Portfolios;
+using StockSight.Infrastructure.Watchlists;
 
 namespace StockSight.Infrastructure;
 
@@ -20,7 +23,12 @@ public static class DependencyInjection
     {
         // --- PostgreSQL via EF Core ---
         services.AddDbContext<StockSightDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("Postgres")));
+        {
+            if (bool.TryParse(configuration["Data:UseInMemory"], out var useInMemory) && useInMemory)
+                options.UseInMemoryDatabase("StockSight");
+            else
+                options.UseNpgsql(configuration.GetConnectionString("Postgres"));
+        });
 
         // --- Redis cache ---
         var redisSection = configuration.GetSection(RedisOptions.SectionName);
@@ -40,6 +48,10 @@ public static class DependencyInjection
         services.AddSingleton<IStockDataProvider, YahooStockDataProvider>();
         services.AddSingleton<INewsService, NewsSentimentAnalyzer>();
         services.AddSingleton<ISignalEngine, SignalEngine>();
+        services.AddScoped<IPortfolioService, PortfolioService>();
+        services.AddScoped<IAlertService, AlertService>();
+        services.AddScoped<IWatchlistService, WatchlistService>();
+        services.AddScoped<INewsFeedService, NewsFeedService>();
 
         return services;
     }

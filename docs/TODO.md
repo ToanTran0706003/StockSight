@@ -8,10 +8,10 @@
 ## Current Sprint — Phase 4: Portfolio, Alerts, Auth & News
 
 ### In Progress
-_None — Phase 3 is implemented._
+_None — Phase 4 is implemented._
 
 ### Up Next
-- [ ] Start Phase 4 portfolio, alerts, auth, and news
+- [ ] Start Phase 5 polish, resilience, deployment, and showcase assets
 
 ### Blocked
 _None yet_
@@ -132,20 +132,20 @@ _None yet_
 
 ## Phase 4 Checklist (starts after Phase 3 complete)
 
-- [ ] JWT auth (register + login)
-- [ ] `PortfolioService.cs` + controller
-- [ ] `PortfolioPage.razor` with real-time P&L
-- [ ] `AlertCheckerService.cs` background service
-- [ ] `AlertsPage.razor`
-- [ ] `NewsService.cs` + sentiment
-- [ ] `NewsPanel.razor`
-- [ ] Watchlist CRUD endpoints
+- [x] JWT auth (register + login)
+- [x] `PortfolioService.cs` + controller
+- [x] `PortfolioPage.razor` with real-time P&L
+- [x] `AlertCheckerService.cs` background service
+- [x] `AlertsPage.razor`
+- [x] `NewsService.cs` + sentiment
+- [x] `NewsPanel.razor`
+- [x] Watchlist CRUD endpoints
 
 ---
 
 ## Phase 5 Checklist (starts after Phase 4 complete)
 
-- [ ] 20+ unit tests passing
+- [x] 20+ unit tests passing
 - [ ] Integration tests for main API flows
 - [ ] Global error handling middleware
 - [ ] Polly retry policy for external APIs
@@ -168,6 +168,7 @@ _Move completed items here with date_
 - [x] 2026-06-17 — Phase 2 chart foundation implemented: TradingView Lightweight Charts interop, stock detail page, interval selector, SMA/EMA/Bollinger overlays, RSI/MACD summary, indicator API endpoints, fallback market data, and indicator unit tests.
 - [x] 2026-06-17 — Phase 2 completed: RSI line pane with 30/70 guide lines and MACD pane with MACD/signal lines plus histogram.
 - [x] 2026-06-17 — Phase 3 completed: combined technical/news signal engine, OpenAI-ready sentiment analyzer with fallback, signal badge/history UI, backtest engine, SMA/RSI/MACD strategies, backtest API, backtest page, and 20 passing tests.
+- [x] 2026-06-17 — Phase 4 completed: JWT auth, in-memory Blazor auth state, portfolio trading/P&L, alert CRUD and checker, news sentiment panel, watchlist CRUD sync, EF cash migration, and 24 passing tests.
 
 ---
 

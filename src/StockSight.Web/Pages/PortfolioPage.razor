@@ -1,0 +1,220 @@
+@page "/portfolio"
+@implements IAsyncDisposable
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject StockHubClient Hub
+
+<PageTitle>Portfolio - StockSight</PageTitle>
+
+<h1>Portfolio</h1>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="error">@error</p>
+}
+
+<section class="backtest-form">
+    <label>Name<input @bind="newPortfolioName" /></label>
+    <label>Initial Cash<input type="number" min="1000" step="500" @bind="newInitialCash" /></label>
+    <button @onclick="CreatePortfolioAsync">Create</button>
+</section>
+
+@if (snapshot is not null)
+{
+    <section class="metrics-grid">
+        <article><span class="status">Total Value</span><strong>@Money(snapshot.TotalValue)</strong></article>
+        <article><span class="status">Cash</span><strong>@Money(snapshot.CashBalance)</strong></article>
+        <article><span class="status">Market Value</span><strong>@Money(snapshot.MarketValue)</strong></article>
+        <article><span class="status">Total P&amp;L</span><strong class="@(snapshot.TotalPnL >= 0 ? "up" : "down")">@Money(snapshot.TotalPnL)</strong></article>
+        <article><span class="status">Return</span><strong class="@(snapshot.TotalPnLPercent >= 0 ? "up" : "down")">@snapshot.TotalPnLPercent.ToString("N2")%</strong></article>
+    </section>
+
+    <section class="backtest-form">
+        <label>Symbol<input @bind="trade.Symbol" /></label>
+        <label>Shares<input type="number" min="0.0001" step="0.1" @bind="trade.Shares" /></label>
+        <label>Price<input type="number" min="0.01" step="0.01" @bind="trade.Price" /></label>
+        <button @onclick="BuyAsync">Buy</button>
+        <button @onclick="SellAsync">Sell</button>
+    </section>
+
+    <section class="allocation-list">
+        @foreach (var position in snapshot.Positions)
+        {
+            var width = snapshot.MarketValue == 0 ? 0 : position.MarketValue / snapshot.MarketValue * 100m;
+            <article>
+                <div><strong>@position.Symbol</strong><span>@width.ToString("N1")%</span></div>
+                <div class="confidence-track"><div class="confidence-fill" style="width:@($"{Math.Clamp(width, 0, 100)}%")"></div></div>
+            </article>
+        }
+    </section>
+
+    <section class="trade-log">
+        <h2>Positions</h2>
+        <table class="ticks">
+            <thead>
+                <tr><th>Symbol</th><th>Shares</th><th>Avg Cost</th><th>Price</th><th>Value</th><th>P&amp;L</th><th>Return</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in snapshot.Positions)
+                {
+                    <tr>
+                        <td>@p.Symbol</td>
+                        <td>@p.Shares.ToString("N4")</td>
+                        <td>@Money(p.AverageCost)</td>
+                        <td>@Money(p.CurrentPrice)</td>
+                        <td>@Money(p.MarketValue)</td>
+                        <td class="@(p.PnL >= 0 ? "up" : "down")">@Money(p.PnL)</td>
+                        <td class="@(p.PnLPercent >= 0 ? "up" : "down")">@p.PnLPercent.ToString("N2")%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private List<PortfolioDto> portfolios = new();
+    private PortfolioSnapshotDto? snapshot;
+    private string newPortfolioName = "Growth Portfolio";
+    private decimal newInitialCash = 10_000m;
+    private string? error;
+    private TradeForm trade = new() { Symbol = "AAPL", Shares = 1, Price = 250 };
+    private bool hubConnected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.TickReceived += OnTick;
+        try
+        {
+            await Hub.ConnectAsync();
+            hubConnected = true;
+        }
+        catch
+        {
+            hubConnected = false;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        try
+        {
+            portfolios = await Http.GetFromJsonAsync<List<PortfolioDto>>("api/portfolio") ?? new();
+            if (portfolios.Count == 0)
+                await CreatePortfolioAsync();
+            else
+                await LoadSnapshotAsync(portfolios[0].Id);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Nav.NavigateTo("login");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private async Task CreatePortfolioAsync()
+    {
+        var response = await Http.PostAsJsonAsync("api/portfolio", new { name = newPortfolioName, initialCash = newInitialCash });
+        if (!response.IsSuccessStatusCode)
+        {
+            error = await response.Content.ReadAsStringAsync();
+            return;
+        }
+
+        var created = await response.Content.ReadFromJsonAsync<PortfolioDto>();
+        if (created is not null)
+        {
+            portfolios.Insert(0, created);
+            await LoadSnapshotAsync(created.Id);
+        }
+    }
+
+    private async Task BuyAsync() => await TradeAsync("buy");
+
+    private async Task SellAsync() => await TradeAsync("sell");
+
+    private async Task TradeAsync(string action)
+    {
+        if (snapshot is null)
+            return;
+
+        var response = await Http.PostAsJsonAsync($"api/portfolio/{snapshot.PortfolioId}/{action}", trade);
+        if (!response.IsSuccessStatusCode)
+        {
+            error = await response.Content.ReadAsStringAsync();
+            return;
+        }
+
+        await LoadSnapshotAsync(snapshot.PortfolioId);
+    }
+
+    private async Task LoadSnapshotAsync(Guid id)
+    {
+        snapshot = await Http.GetFromJsonAsync<PortfolioSnapshotDto>($"api/portfolio/{id}/pnl");
+        await SubscribePositionsAsync();
+    }
+
+    private async Task SubscribePositionsAsync()
+    {
+        if (!hubConnected || snapshot is null)
+            return;
+
+        foreach (var symbol in snapshot.Positions.Select(p => p.Symbol).Distinct())
+            await Hub.SubscribeAsync(symbol);
+    }
+
+    private void OnTick(StockTick tick)
+    {
+        if (snapshot?.Positions.Any(p => p.Symbol == tick.Symbol) != true)
+            return;
+
+        InvokeAsync(async () =>
+        {
+            await LoadSnapshotAsync(snapshot.PortfolioId);
+            StateHasChanged();
+        });
+    }
+
+    private static string Money(decimal value) => value.ToString("C2");
+
+    private class TradeForm
+    {
+        public string Symbol { get; set; } = string.Empty;
+        public decimal Shares { get; set; }
+        public decimal Price { get; set; }
+    }
+
+    private record PortfolioDto(Guid Id, string Name, decimal InitialCash, decimal CashBalance);
+
+    private record PortfolioSnapshotDto(
+        Guid PortfolioId,
+        string Name,
+        decimal InitialCash,
+        decimal CashBalance,
+        decimal MarketValue,
+        decimal TotalValue,
+        decimal TotalPnL,
+        decimal TotalPnLPercent,
+        IReadOnlyList<PortfolioPositionDto> Positions);
+
+    private record PortfolioPositionDto(
+        string Symbol,
+        decimal Shares,
+        decimal AverageCost,
+        decimal CurrentPrice,
+        decimal MarketValue,
+        decimal PnL,
+        decimal PnLPercent);
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.TickReceived -= OnTick;
+        await Hub.DisposeAsync();
+    }
+}

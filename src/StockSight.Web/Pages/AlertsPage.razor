@@ -1,0 +1,142 @@
+@page "/alerts"
+@implements IAsyncDisposable
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject StockHubClient Hub
+
+<PageTitle>Alerts - StockSight</PageTitle>
+
+<h1>Alerts</h1>
+
+@if (!string.IsNullOrWhiteSpace(toast))
+{
+    <p class="notice">@toast</p>
+}
+
+<section class="backtest-form">
+    <label>Symbol<input @bind="form.Symbol" /></label>
+    <label>Target Price<input type="number" min="0.01" step="0.01" @bind="form.TargetPrice" /></label>
+    <label>
+        Direction
+        <select @bind="form.Direction">
+            <option value="Above">Above</option>
+            <option value="Below">Below</option>
+        </select>
+    </label>
+    <button @onclick="CreateAsync">Create</button>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="error">@error</p>
+}
+
+<section class="trade-log">
+    <table class="ticks">
+        <thead>
+            <tr><th>Symbol</th><th>Direction</th><th>Target</th><th>Status</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var alert in alerts)
+            {
+                <tr>
+                    <td>@alert.Symbol</td>
+                    <td>@alert.Direction</td>
+                    <td>@alert.TargetPrice.ToString("C2")</td>
+                    <td>@(alert.IsTriggered ? "Triggered" : "Active")</td>
+                    <td>@alert.CreatedUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td><button class="link-button" @onclick="() => DeleteAsync(alert.Id)">Delete</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+@code {
+    private List<AlertDto> alerts = new();
+    private AlertForm form = new() { Symbol = "AAPL", TargetPrice = 300, Direction = "Above" };
+    private string? error;
+    private string? toast;
+    private bool hubConnected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.AlertReceived += OnAlert;
+        try
+        {
+            await Hub.ConnectAsync();
+            hubConnected = true;
+        }
+        catch
+        {
+            hubConnected = false;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            alerts = await Http.GetFromJsonAsync<List<AlertDto>>("api/alerts") ?? new();
+            if (hubConnected)
+            {
+                foreach (var symbol in alerts.Select(a => a.Symbol).Distinct())
+                    await Hub.SubscribeAsync(symbol);
+            }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            Nav.NavigateTo("login");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        error = null;
+        var response = await Http.PostAsJsonAsync("api/alerts", form);
+        if (!response.IsSuccessStatusCode)
+        {
+            error = await response.Content.ReadAsStringAsync();
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private void OnAlert(Alert alert)
+    {
+        InvokeAsync(async () =>
+        {
+            toast = $"{alert.Symbol} alert triggered at {alert.TargetPrice:C2}";
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        await Http.DeleteAsync($"api/alerts/{id}");
+        await LoadAsync();
+    }
+
+    private class AlertForm
+    {
+        public string Symbol { get; set; } = string.Empty;
+        public decimal TargetPrice { get; set; }
+        public string Direction { get; set; } = "Above";
+    }
+
+    private record AlertDto(Guid Id, string Symbol, decimal TargetPrice, string Direction, bool IsTriggered, DateTime CreatedUtc);
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.AlertReceived -= OnAlert;
+        await Hub.DisposeAsync();
+    }
+}

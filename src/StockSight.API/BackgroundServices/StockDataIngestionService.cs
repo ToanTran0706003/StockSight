@@ -9,6 +9,7 @@ public class StockDataIngestionService : BackgroundService
     private readonly IStockDataProvider _provider;
     private readonly ICacheService _cache;
     private readonly IStockBroadcaster _broadcaster;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptionsMonitor<StockIngestionOptions> _options;
     private readonly ILogger<StockDataIngestionService> _logger;
 
@@ -16,12 +17,14 @@ public class StockDataIngestionService : BackgroundService
         IStockDataProvider provider,
         ICacheService cache,
         IStockBroadcaster broadcaster,
+        IServiceScopeFactory scopeFactory,
         IOptionsMonitor<StockIngestionOptions> options,
         ILogger<StockDataIngestionService> logger)
     {
         _provider = provider;
         _cache = cache;
         _broadcaster = broadcaster;
+        _scopeFactory = scopeFactory;
         _options = options;
         _logger = logger;
     }
@@ -39,7 +42,7 @@ public class StockDataIngestionService : BackgroundService
 
             try
             {
-                var symbols = options.Symbols
+                var symbols = (await GetPolledSymbolsAsync(options.Symbols, stoppingToken))
                     .Select(s => s.Trim().ToUpperInvariant())
                     .Where(s => s.Length > 0)
                     .Distinct()
@@ -58,6 +61,21 @@ public class StockDataIngestionService : BackgroundService
             }
 
             await Task.Delay(options.PollInterval, stoppingToken);
+        }
+    }
+
+    private async Task<IEnumerable<string>> GetPolledSymbolsAsync(IEnumerable<string> configured, CancellationToken ct)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var watchlist = scope.ServiceProvider.GetRequiredService<IWatchlistService>();
+            return configured.Concat(await watchlist.GetAllSymbolsAsync(ct));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Falling back to configured ingestion symbols.");
+            return configured;
         }
     }
 

@@ -1,0 +1,47 @@
+@page "/register"
+@inject AuthStateProvider Auth
+@inject NavigationManager Nav
+
+<PageTitle>Register - StockSight</PageTitle>
+
+<h1>Register</h1>
+
+<section class="auth-panel">
+    <label>Display name<input @bind="displayName" /></label>
+    <label>Email<input @bind="email" type="email" /></label>
+    <label>Password<input @bind="password" type="password" /></label>
+    <button @onclick="RegisterAsync" disabled="@busy">Create account</button>
+    <NavLink href="login">I already have an account</NavLink>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="error">@error</p>
+}
+
+@code {
+    private string displayName = "Demo Trader";
+    private string email = $"demo{DateTime.UtcNow:HHmmss}@stocksight.local";
+    private string password = "demo123";
+    private bool busy;
+    private string? error;
+
+    private async Task RegisterAsync()
+    {
+        busy = true;
+        error = null;
+        try
+        {
+            await Auth.RegisterAsync(email, password, displayName);
+            Nav.NavigateTo("portfolio");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
