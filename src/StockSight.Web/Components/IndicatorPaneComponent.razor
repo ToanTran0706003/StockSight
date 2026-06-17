@@ -1,0 +1,69 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<section class="indicator-pane">
+    <div class="pane-header">
+        <strong>@Title</strong>
+        <span>@Subtitle</span>
+    </div>
+    <div id="@ElementId" class="pane-chart"></div>
+</section>
+
+@code {
+    private readonly string ElementId = $"pane-{Guid.NewGuid():N}";
+    private bool initialized;
+    private bool pendingRender = true;
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Subtitle { get; set; } = string.Empty;
+
+    [Parameter]
+    public decimal? Minimum { get; set; }
+
+    [Parameter]
+    public decimal? Maximum { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<PaneLine> Lines { get; set; } = Array.Empty<PaneLine>();
+
+    [Parameter]
+    public IReadOnlyList<IndicatorPoint> Histogram { get; set; } = Array.Empty<IndicatorPoint>();
+
+    protected override void OnParametersSet()
+    {
+        pendingRender = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("stockSightCharts.createIndicatorChart", ElementId, Minimum, Maximum);
+            initialized = true;
+        }
+
+        if (initialized && pendingRender)
+        {
+            pendingRender = false;
+            await RenderAsync();
+        }
+    }
+
+    private async Task RenderAsync()
+    {
+        await JS.InvokeVoidAsync("stockSightCharts.setIndicatorLines", ElementId, Lines);
+        if (Histogram.Count > 0)
+            await JS.InvokeVoidAsync("stockSightCharts.setIndicatorHistogram", ElementId, "Histogram", Histogram);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (initialized)
+            await JS.InvokeVoidAsync("stockSightCharts.disposeChart", ElementId);
+    }
+
+    public record PaneLine(string Name, string Color, IReadOnlyList<IndicatorPoint> Points, int Width = 2, bool LastValueVisible = true);
+}

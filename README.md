@@ -4,7 +4,7 @@ Real-time stock dashboard built with **ASP.NET Core 8 + Blazor WebAssembly + Sig
 
 Phase 1 is implemented: the API can fetch/cache quotes, the background ingestion service polls configured symbols, SignalR broadcasts ticks, and the Blazor watchlist renders live price badges.
 
-Phase 2 chart foundation is implemented: stock detail pages render candlesticks with TradingView Lightweight Charts, interval switching, SMA/EMA/Bollinger overlays, RSI/MACD summaries, and server-side indicator endpoints.
+Phase 2 is implemented: stock detail pages render candlesticks with TradingView Lightweight Charts, interval switching, SMA/EMA/Bollinger overlays, RSI/MACD sub-pane charts, summaries, and server-side indicator endpoints.
 
 ## Architecture
 
@@ -110,5 +110,5 @@ with `InitialCreate` migration and seed symbols, Hangfire server, CORS, Swagger,
 cache-aside stock endpoints, health endpoint, background quote ingestion, Blazor
 watchlist/live-ticker pages, GitHub Actions CI, and unit tests.
 
-**Stub / next steps:** RSI/MACD sub-pane charts, alert evaluation pipeline,
-portfolio CRUD endpoints, authentication, backtesting, and the OpenAI-powered insights service.
+**Stub / next steps:** alert evaluation pipeline, portfolio CRUD endpoints,
+authentication, backtesting, and the OpenAI-powered insights service.

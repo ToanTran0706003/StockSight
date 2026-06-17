@@ -179,6 +179,38 @@ table.ticks th, table.ticks td {
     background: #111827;
 }
 
+.indicator-panes {
+    display: grid;
+    gap: .75rem;
+    margin-top: .75rem;
+}
+
+.indicator-pane {
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #111827;
+    overflow: hidden;
+}
+
+.pane-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .55rem .75rem;
+    border-bottom: 1px solid #334155;
+    background: #162033;
+}
+
+.pane-header span {
+    color: #94a3b8;
+    font-size: .85rem;
+}
+
+.pane-chart {
+    width: 100%;
+    height: 180px;
+}
+
 .indicator-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

@@ -11,7 +11,6 @@
 _None — Phase 1 foundation is implemented._
 
 ### Up Next
-- [ ] Add RSI/MACD sub-pane chart rendering
 - [ ] Start Phase 3 AI signals + backtesting
 
 ### Blocked
@@ -113,7 +112,7 @@ _None yet_
 - [x] Unit tests for all indicator calculations
 - [x] Indicator API endpoints
 - [x] Toggle panel for indicator overlays
-- [ ] RSI and MACD render in sub-pane below main chart
+- [x] RSI and MACD render in sub-pane below main chart
 - [x] Full stock detail page
 
 ---
@@ -167,6 +166,7 @@ _Move completed items here with date_
 
 - [x] 2026-06-17 — Phase 1 foundation implemented: Core models/interfaces, Yahoo provider, Redis cache/pub-sub, EF migration + seed data, SignalR hub, ingestion background service, REST stock endpoints, health endpoint, Blazor watchlist, and GitHub Actions CI.
 - [x] 2026-06-17 — Phase 2 chart foundation implemented: TradingView Lightweight Charts interop, stock detail page, interval selector, SMA/EMA/Bollinger overlays, RSI/MACD summary, indicator API endpoints, fallback market data, and indicator unit tests.
+- [x] 2026-06-17 — Phase 2 completed: RSI line pane with 30/70 guide lines and MACD pane with MACD/signal lines plus histogram.
 
 ---
 

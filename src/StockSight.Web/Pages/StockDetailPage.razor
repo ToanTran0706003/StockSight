@@ -46,6 +46,21 @@
 
 <ChartComponent @ref="chart" Bars="bars" Lines="chartLines" />
 
+<div class="indicator-panes">
+    <IndicatorPaneComponent
+        Title="RSI 14"
+        Subtitle="Momentum oscillator"
+        Minimum="@(0m)"
+        Maximum="@(100m)"
+        Lines="rsiPaneLines" />
+
+    <IndicatorPaneComponent
+        Title="MACD"
+        Subtitle="MACD line, signal line, histogram"
+        Lines="macdPaneLines"
+        Histogram="macdHistogram" />
+</div>
+
 <section class="indicator-summary">
     <article>
         <span class="status">RSI 14</span>
@@ -83,6 +98,9 @@
     private MacdResponse? macd;
     private IReadOnlyList<OhlcvBar> bars = Array.Empty<OhlcvBar>();
     private Dictionary<string, ChartComponent.ChartLine> chartLines = new();
+    private IReadOnlyList<IndicatorPaneComponent.PaneLine> rsiPaneLines = Array.Empty<IndicatorPaneComponent.PaneLine>();
+    private IReadOnlyList<IndicatorPaneComponent.PaneLine> macdPaneLines = Array.Empty<IndicatorPaneComponent.PaneLine>();
+    private IReadOnlyList<IndicatorPoint> macdHistogram = Array.Empty<IndicatorPoint>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -148,6 +166,7 @@
 
             rsi = await Http.GetFromJsonAsync<RsiResponse>($"api/stocks/{symbol}/indicators/rsi?interval={interval}");
             macd = await Http.GetFromJsonAsync<MacdResponse>($"api/stocks/{symbol}/indicators/macd?interval={interval}");
+            BuildPaneLines();
             await ReloadIndicatorsAsync();
         }
         catch (Exception ex)
@@ -192,6 +211,39 @@
         StateHasChanged();
     }
 
+    private void BuildPaneLines()
+    {
+        if (rsi?.Values is not null)
+        {
+            var timestamps = rsi.Values.Select(p => p.TimestampUtc).ToArray();
+            rsiPaneLines =
+            [
+                new("RSI", "#38bdf8", rsi.Values, 2),
+                new("Overbought 70", "#64748b", ConstantLine(timestamps, 70m), 1, false),
+                new("Oversold 30", "#64748b", ConstantLine(timestamps, 30m), 1, false)
+            ];
+        }
+        else
+        {
+            rsiPaneLines = Array.Empty<IndicatorPaneComponent.PaneLine>();
+        }
+
+        if (macd?.Values is not null)
+        {
+            macdPaneLines =
+            [
+                new("MACD", "#38bdf8", macd.Values.Select(p => new IndicatorPoint(p.TimestampUtc, p.Macd)).ToArray(), 2),
+                new("Signal", "#f59e0b", macd.Values.Select(p => new IndicatorPoint(p.TimestampUtc, p.Signal)).ToArray(), 2)
+            ];
+            macdHistogram = macd.Values.Select(p => new IndicatorPoint(p.TimestampUtc, p.Histogram)).ToArray();
+        }
+        else
+        {
+            macdPaneLines = Array.Empty<IndicatorPaneComponent.PaneLine>();
+            macdHistogram = Array.Empty<IndicatorPoint>();
+        }
+    }
+
     private void OnTick(StockTick tick)
     {
         if (!Clean(tick.Symbol).Equals(symbol, StringComparison.OrdinalIgnoreCase))
@@ -209,6 +261,9 @@
     private static string Clean(string value) => value.Trim().ToUpperInvariant();
 
     private static string Display(decimal? value) => value?.ToString("N2") ?? "--";
+
+    private static IReadOnlyList<IndicatorPoint> ConstantLine(IEnumerable<DateTime> timestamps, decimal value)
+        => timestamps.Select(t => new IndicatorPoint(t, value)).ToArray();
 
     public async ValueTask DisposeAsync()
     {
