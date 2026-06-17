@@ -13,6 +13,7 @@ public class StockHubClient : IAsyncDisposable
 {
     private readonly ApiSettings _settings;
     private HubConnection? _connection;
+    private bool _disposing;
 
     public StockHubClient(ApiSettings settings) => _settings = settings;
 
@@ -23,9 +24,15 @@ public class StockHubClient : IAsyncDisposable
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_connection is not null)
+        if (_connection is { State: not HubConnectionState.Disconnected })
             return;
 
+        if (_connection is not null)
+        {
+            await DisposeConnectionAsync();
+        }
+
+        _disposing = false;
         _connection = new HubConnectionBuilder()
             .WithUrl($"{_settings.BaseUrl.TrimEnd('/')}/hubs/stocks")
             .WithAutomaticReconnect()
@@ -37,15 +44,61 @@ public class StockHubClient : IAsyncDisposable
         await _connection.StartAsync(ct);
     }
 
-    public Task SubscribeAsync(string symbol)
-        => _connection?.InvokeAsync("Subscribe", symbol) ?? Task.CompletedTask;
+    public async Task SubscribeAsync(string symbol)
+    {
+        var connection = _connection;
+        if (_disposing || connection is null || connection.State == HubConnectionState.Disconnected)
+            return;
 
-    public Task UnsubscribeAsync(string symbol)
-        => _connection?.InvokeAsync("Unsubscribe", symbol) ?? Task.CompletedTask;
+        try
+        {
+            await connection.InvokeAsync("Subscribe", symbol);
+        }
+        catch (ObjectDisposedException)
+        {
+            _connection = null;
+        }
+        catch (InvalidOperationException) when (connection.State == HubConnectionState.Disconnected)
+        {
+        }
+    }
+
+    public async Task UnsubscribeAsync(string symbol)
+    {
+        var connection = _connection;
+        if (_disposing || connection is null || connection.State == HubConnectionState.Disconnected)
+            return;
+
+        try
+        {
+            await connection.InvokeAsync("Unsubscribe", symbol);
+        }
+        catch (ObjectDisposedException)
+        {
+            _connection = null;
+        }
+        catch (InvalidOperationException) when (connection.State == HubConnectionState.Disconnected)
+        {
+        }
+    }
 
     public async ValueTask DisposeAsync()
+        => await DisposeConnectionAsync();
+
+    private async ValueTask DisposeConnectionAsync()
     {
-        if (_connection is not null)
-            await _connection.DisposeAsync();
+        var connection = _connection;
+        if (connection is null)
+            return;
+
+        _disposing = true;
+        _connection = null;
+        try
+        {
+            await connection.DisposeAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 }

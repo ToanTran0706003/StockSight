@@ -14,7 +14,7 @@ var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7080"
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 builder.Services.AddSingleton(new ApiSettings(apiBaseUrl));
-builder.Services.AddScoped<StockHubClient>();
+builder.Services.AddTransient<StockHubClient>();
 builder.Services.AddScoped<AuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthStateProvider>());
 
