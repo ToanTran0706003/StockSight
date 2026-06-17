@@ -12,4 +12,15 @@ public interface IStockDataProvider
 
     /// <summary>Fetch the latest quotes for several symbols at once.</summary>
     Task<IReadOnlyList<StockTick>> GetQuotesAsync(IEnumerable<string> symbols, CancellationToken ct = default);
+
+    Task<IReadOnlyList<OhlcvBar>> GetOhlcvAsync(
+        string symbol,
+        string interval,
+        DateTime fromUtc,
+        DateTime toUtc,
+        CancellationToken ct = default);
+
+    Task<StockInfo?> GetStockInfoAsync(string symbol, CancellationToken ct = default);
+
+    Task<IReadOnlyList<StockInfo>> SearchSymbolsAsync(string query, CancellationToken ct = default);
 }

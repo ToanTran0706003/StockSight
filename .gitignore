@@ -5,6 +5,8 @@ obj/
 *.suo
 .vs/
 artifacts/
+TestResults/
+.dotnet/
 
 ## Rider / VS Code
 .idea/

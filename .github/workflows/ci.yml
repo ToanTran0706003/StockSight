@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --logger trx --results-directory TestResults
+
+      - name: Publish API artifact
+        run: dotnet publish src/StockSight.API/StockSight.API.csproj --configuration Release --no-build --output artifacts/api
+
+      - name: Publish Web artifact
+        run: dotnet publish src/StockSight.Web/StockSight.Web.csproj --configuration Release --no-build --output artifacts/web
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stocksight-release
+          path: artifacts

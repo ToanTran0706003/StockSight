@@ -11,4 +11,8 @@ public interface ICacheService
     Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken ct = default);
 
     Task<bool> RemoveAsync(string key, CancellationToken ct = default);
+
+    Task PublishAsync<T>(string channel, T value, CancellationToken ct = default);
+
+    Task SubscribeAsync<T>(string channel, Func<T, Task> handler, CancellationToken ct = default);
 }

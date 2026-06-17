@@ -10,10 +10,14 @@ public class Portfolio
     /// <summary>Owner identifier (e.g. user id / subject claim).</summary>
     public string OwnerId { get; set; } = string.Empty;
 
+    public Guid? UserId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
 
     /// <summary>Positions held within this portfolio.</summary>
     public List<PortfolioHolding> Holdings { get; set; } = new();
+
+    public List<PortfolioPosition> Positions { get; set; } = new();
 }

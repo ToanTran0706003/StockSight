@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.PostgreSql;
+using StockSight.API.BackgroundServices;
 using StockSight.API.Hubs;
 using StockSight.Core.Interfaces;
 using StockSight.Infrastructure;
@@ -14,6 +15,8 @@ builder.Services.AddSwaggerGen();
 // ---- SignalR ----
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IStockBroadcaster, SignalRStockBroadcaster>();
+builder.Services.Configure<StockIngestionOptions>(builder.Configuration.GetSection(StockIngestionOptions.SectionName));
+builder.Services.AddHostedService<StockDataIngestionService>();
 
 // ---- Infrastructure: PostgreSQL (EF Core), Redis, market data ----
 builder.Services.AddInfrastructure(builder.Configuration);

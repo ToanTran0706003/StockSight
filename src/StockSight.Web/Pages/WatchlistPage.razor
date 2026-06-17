@@ -1,0 +1,116 @@
+@page "/watchlist"
+@implements IAsyncDisposable
+@inject HttpClient Http
+@inject StockHubClient Hub
+
+<PageTitle>Watchlist</PageTitle>
+
+<h1>Watchlist</h1>
+
+<div class="controls">
+    <input @bind="newSymbol" placeholder="Symbol e.g. NVDA" />
+    <button @onclick="AddSymbolAsync" disabled="@(!connected)">Add</button>
+    <span class="status">@statusText</span>
+</div>
+
+<section class="watchlist-grid">
+    @foreach (var symbol in symbols)
+    {
+        var tick = latest.GetValueOrDefault(symbol);
+        <article class="quote-card">
+            <div>
+                <h2>@symbol</h2>
+                <span class="status">Live quote</span>
+            </div>
+            @if (tick is null)
+            {
+                <strong class="price">Loading</strong>
+            }
+            else
+            {
+                <strong class="price">@tick.Price.ToString("N2")</strong>
+                <span class="@(tick.Change >= 0 ? "up" : "down")">
+                    @tick.Change.ToString("N2") (@tick.ChangePercent.ToString("N2")%)
+                </span>
+                <span class="status">@tick.TimestampUtc.ToString("HH:mm:ss") UTC</span>
+            }
+        </article>
+    }
+</section>
+
+@code {
+    private readonly List<string> symbols = new() { "AAPL", "MSFT", "GOOGL", "TSLA", "AMZN" };
+    private readonly Dictionary<string, StockTick> latest = new();
+    private string newSymbol = "NVDA";
+    private bool connected;
+    private string statusText = "Connecting...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Hub.TickReceived += OnTick;
+
+        try
+        {
+            await Hub.ConnectAsync();
+            connected = true;
+            statusText = "Connected";
+
+            foreach (var symbol in symbols.ToArray())
+                await SubscribeAndLoadAsync(symbol);
+        }
+        catch (Exception ex)
+        {
+            statusText = $"Connection failed: {ex.Message}";
+        }
+    }
+
+    private async Task AddSymbolAsync()
+    {
+        var symbol = Clean(newSymbol);
+        if (symbol.Length == 0 || symbols.Contains(symbol))
+            return;
+
+        symbols.Add(symbol);
+        await SubscribeAndLoadAsync(symbol);
+        newSymbol = string.Empty;
+    }
+
+    private async Task SubscribeAndLoadAsync(string symbol)
+    {
+        await Hub.SubscribeAsync(symbol);
+
+        try
+        {
+            var tick = await Http.GetFromJsonAsync<StockTick>($"api/stocks/{symbol}/quote");
+            if (tick is not null)
+                latest[symbol] = tick;
+        }
+        catch
+        {
+            latest.Remove(symbol);
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnTick(StockTick tick)
+    {
+        InvokeAsync(() =>
+        {
+            var symbol = Clean(tick.Symbol);
+            if (!symbols.Contains(symbol))
+                symbols.Add(symbol);
+
+            latest[symbol] = tick;
+            StateHasChanged();
+        });
+    }
+
+    private static string Clean(string symbol) => symbol.Trim().ToUpperInvariant();
+
+    public async ValueTask DisposeAsync()
+    {
+        Hub.TickReceived -= OnTick;
+        await Hub.DisposeAsync();
+    }
+}

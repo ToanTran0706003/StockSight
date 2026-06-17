@@ -17,3 +17,10 @@ public enum AlertStatus
     Triggered,
     Disabled
 }
+
+public enum SignalAction
+{
+    Buy,
+    Sell,
+    Hold
+}

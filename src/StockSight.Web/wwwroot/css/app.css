@@ -72,6 +72,33 @@ table.ticks th, table.ticks td {
 .up { color: var(--up); }
 .down { color: var(--down); }
 
+.watchlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.quote-card {
+    min-height: 150px;
+    padding: 1rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+}
+
+.quote-card h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.price {
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
 #blazor-error-ui {
     display: none;
     position: fixed;

@@ -22,9 +22,16 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("Postgres")));
 
         // --- Redis cache ---
-        services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
-        var redisConn = configuration.GetSection(RedisOptions.SectionName)["ConnectionString"]
-                        ?? "localhost:6379";
+        var redisSection = configuration.GetSection(RedisOptions.SectionName);
+        services.Configure<RedisOptions>(options =>
+        {
+            options.ConnectionString = redisSection["ConnectionString"] ?? options.ConnectionString;
+            options.InstanceName = redisSection["InstanceName"] ?? options.InstanceName;
+            if (TimeSpan.TryParse(redisSection["DefaultExpiry"], out var expiry))
+                options.DefaultExpiry = expiry;
+        });
+
+        var redisConn = redisSection["ConnectionString"] ?? "localhost:6379";
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
         services.AddSingleton<ICacheService, RedisCacheService>();
 

@@ -2,6 +2,8 @@
 
 Real-time stock dashboard built with **ASP.NET Core 8 + Blazor WebAssembly + SignalR**, organised as a Clean Architecture solution.
 
+Phase 1 is implemented: the API can fetch/cache quotes, the background ingestion service polls configured symbols, SignalR broadcasts ticks, and the Blazor watchlist renders live price badges.
+
 ## Architecture
 
 ```
@@ -100,11 +102,11 @@ dotnet test
 
 ## What's wired vs. what's a stub
 
-**Wired:** project structure & references, NuGet packages, domain models, SignalR hub
-+ broadcaster, Redis cache service, EF Core/PostgreSQL DbContext with entity config,
-Hangfire server, CORS, Swagger, a cache-aside `StocksController`, a Blazor live-ticker
-page, and unit tests.
+**Wired:** project structure & references, NuGet packages, Phase 1 domain models,
+SignalR hub + broadcaster, Redis cache/pub-sub service, EF Core/PostgreSQL DbContext
+with `InitialCreate` migration and seed symbols, Hangfire server, CORS, Swagger,
+cache-aside stock endpoints, health endpoint, background quote ingestion, Blazor
+watchlist/live-ticker pages, GitHub Actions CI, and unit tests.
 
-**Stub / next steps:** background job that polls `IStockDataProvider` and calls
-`IStockBroadcaster` on a schedule, alert evaluation pipeline, portfolio CRUD endpoints,
-authentication, and the OpenAI-powered insights service.
+**Stub / next steps:** charts, technical indicators, alert evaluation pipeline,
+portfolio CRUD endpoints, authentication, and the OpenAI-powered insights service.

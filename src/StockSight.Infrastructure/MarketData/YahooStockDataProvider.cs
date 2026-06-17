@@ -54,9 +54,75 @@ public class YahooStockDataProvider : IStockDataProvider
         return ticks;
     }
 
+    public async Task<IReadOnlyList<OhlcvBar>> GetOhlcvAsync(
+        string symbol,
+        string interval,
+        DateTime fromUtc,
+        DateTime toUtc,
+        CancellationToken ct = default)
+    {
+        symbol = CleanSymbol(symbol);
+        var period = interval.Equals("1w", StringComparison.OrdinalIgnoreCase)
+            ? Period.Weekly
+            : Period.Daily;
+
+        var candles = await Yahoo.GetHistoricalAsync(symbol, fromUtc, toUtc, period);
+
+        return candles
+            .OrderBy(c => c.DateTime)
+            .Select(c => new OhlcvBar
+            {
+                Symbol = symbol,
+                TimestampUtc = DateTime.SpecifyKind(c.DateTime, DateTimeKind.Utc),
+                Interval = interval,
+                Open = Convert.ToDecimal(c.Open),
+                High = Convert.ToDecimal(c.High),
+                Low = Convert.ToDecimal(c.Low),
+                Close = Convert.ToDecimal(c.Close),
+                Volume = Convert.ToInt64(c.Volume)
+            })
+            .ToArray();
+    }
+
+    public async Task<StockInfo?> GetStockInfoAsync(string symbol, CancellationToken ct = default)
+    {
+        symbol = CleanSymbol(symbol);
+        var quote = await GetQuoteAsync(symbol, ct);
+        if (quote is null)
+            return null;
+
+        return new StockInfo
+        {
+            Symbol = symbol,
+            CompanyName = symbol,
+            Exchange = "Yahoo Finance"
+        };
+    }
+
+    public Task<IReadOnlyList<StockInfo>> SearchSymbolsAsync(string query, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return Task.FromResult<IReadOnlyList<StockInfo>>(Array.Empty<StockInfo>());
+
+        var symbol = CleanSymbol(query);
+        IReadOnlyList<StockInfo> result = new[]
+        {
+            new StockInfo
+            {
+                Symbol = symbol,
+                CompanyName = symbol,
+                Exchange = "Yahoo Finance"
+            }
+        };
+
+        return Task.FromResult(result);
+    }
+
     private static decimal ToDecimal(dynamic? value)
         => value is null ? 0m : Convert.ToDecimal(value);
 
     private static long ToLong(dynamic? value)
         => value is null ? 0L : Convert.ToInt64(value);
+
+    private static string CleanSymbol(string symbol) => symbol.Trim().ToUpperInvariant();
 }

@@ -8,15 +8,11 @@
 ## Current Sprint — Phase 1: Foundation
 
 ### In Progress
-- [ ] Solution scaffold and project references
-- [ ] Core domain models
+_None — Phase 1 foundation is implemented._
 
 ### Up Next
-- [ ] SignalR Hub setup
-- [ ] Yahoo Finance data provider
-- [ ] Redis cache service
-- [ ] Background ingestion service
-- [ ] Blazor shell + SignalR client
+- [ ] Smoke-test live app with local PostgreSQL + Redis running
+- [ ] Start Phase 2 charts + indicators
 
 ### Blocked
 _None yet_
@@ -26,83 +22,83 @@ _None yet_
 ## Phase 1 Checklist
 
 ### Solution & Projects
-- [ ] `dotnet new sln -n StockSight`
-- [ ] Create `StockSight.Core` class library
-- [ ] Create `StockSight.API` web API project
-- [ ] Create `StockSight.Infrastructure` class library
-- [ ] Create `StockSight.Web` Blazor WASM project
-- [ ] Create `StockSight.Tests` xUnit project
-- [ ] Add all projects to solution
-- [ ] Set project references correctly
-- [ ] Add `.gitignore`
-- [ ] Create `docs/` folder and copy all markdown files
-- [ ] Initial commit pushed to GitHub
+- [x] `dotnet new sln -n StockSight`
+- [x] Create `StockSight.Core` class library
+- [x] Create `StockSight.API` web API project
+- [x] Create `StockSight.Infrastructure` class library
+- [x] Create `StockSight.Web` Blazor WASM project
+- [x] Create `StockSight.Tests` xUnit project
+- [x] Add all projects to solution
+- [x] Set project references correctly
+- [x] Add `.gitignore`
+- [x] Create `docs/` folder and copy all markdown files
+- [x] Initial commit pushed to GitHub
 
 ### Domain Models (`StockSight.Core/Models/`)
-- [ ] `StockTick.cs`
-- [ ] `OhlcvBar.cs`
-- [ ] `StockInfo.cs`
-- [ ] `User.cs`
-- [ ] `WatchlistItem.cs`
-- [ ] `Portfolio.cs`
-- [ ] `PortfolioPosition.cs`
-- [ ] `PriceAlert.cs`
-- [ ] `TradeSignal.cs`
+- [x] `StockTick.cs`
+- [x] `OhlcvBar.cs`
+- [x] `StockInfo.cs`
+- [x] `User.cs`
+- [x] `WatchlistItem.cs`
+- [x] `Portfolio.cs`
+- [x] `PortfolioPosition.cs`
+- [x] `PriceAlert.cs`
+- [x] `TradeSignal.cs`
 
 ### Interfaces (`StockSight.Core/Interfaces/`)
-- [ ] `IStockDataProvider.cs`
-- [ ] `ISignalEngine.cs`
-- [ ] `ICacheService.cs`
-- [ ] `IAlertService.cs`
-- [ ] `IPortfolioService.cs`
-- [ ] `INewsService.cs`
+- [x] `IStockDataProvider.cs`
+- [x] `ISignalEngine.cs`
+- [x] `ICacheService.cs`
+- [x] `IAlertService.cs`
+- [x] `IPortfolioService.cs`
+- [x] `INewsService.cs`
 
 ### Infrastructure — Data
-- [ ] Install NuGet packages (YahooFinanceApi, RestSharp, Newtonsoft.Json)
-- [ ] `YahooFinanceProvider.cs` — GetQuoteAsync
-- [ ] `YahooFinanceProvider.cs` — GetOhlcvAsync
-- [ ] `YahooFinanceProvider.cs` — GetStockInfoAsync
+- [x] Install NuGet packages (YahooFinanceApi, RestSharp, OpenAI)
+- [x] `YahooFinanceProvider.cs` — GetQuoteAsync
+- [x] `YahooFinanceProvider.cs` — GetOhlcvAsync
+- [x] `YahooFinanceProvider.cs` — GetStockInfoAsync
 - [ ] `AlphaVantageProvider.cs` — GetRsiAsync (fallback)
 
 ### Infrastructure — Database
-- [ ] Install EF Core + Npgsql packages
-- [ ] `StockSightDbContext.cs` with all DbSets
-- [ ] Entity configurations (Fluent API)
-- [ ] First migration: `InitialCreate`
-- [ ] Seed 5 default symbols
+- [x] Install EF Core + Npgsql packages
+- [x] `StockSightDbContext.cs` with all DbSets
+- [x] Entity configurations (Fluent API)
+- [x] First migration: `InitialCreate`
+- [x] Seed 5 default symbols
 - [ ] Test connection to local PostgreSQL
 
 ### Infrastructure — Redis
-- [ ] Install StackExchange.Redis
-- [ ] `RedisCacheService.cs` — GetAsync, SetAsync
-- [ ] `RedisCacheService.cs` — PublishAsync, SubscribeAsync
+- [x] Install StackExchange.Redis
+- [x] `RedisCacheService.cs` — GetAsync, SetAsync
+- [x] `RedisCacheService.cs` — PublishAsync, SubscribeAsync
 - [ ] Test Redis connection
 
 ### API — Background Service
-- [ ] `StockDataIngestionService.cs` extends BackgroundService
-- [ ] Fetch loop every 5 seconds
-- [ ] Push to Redis pub/sub
-- [ ] Register in `Program.cs`
+- [x] `StockDataIngestionService.cs` extends BackgroundService
+- [x] Fetch loop every 5 seconds
+- [x] Push to Redis pub/sub
+- [x] Register in `Program.cs`
 
 ### API — SignalR
-- [ ] `StockHub.cs` with Subscribe/Unsubscribe methods
-- [ ] Register SignalR + CORS in `Program.cs`
-- [ ] Map hub route `/hubs/stock`
+- [x] `StockHub.cs` with Subscribe/Unsubscribe methods
+- [x] Register SignalR + CORS in `Program.cs`
+- [x] Map hub route `/hubs/stocks`
 - [ ] Test with browser SignalR client
 
 ### API — REST Endpoints
-- [ ] `GET /api/stocks/{symbol}/quote`
-- [ ] `GET /api/stocks/{symbol}/ohlcv`
-- [ ] `GET /api/stocks/{symbol}/info`
-- [ ] `GET /api/stocks/search?q=`
-- [ ] `GET /health`
+- [x] `GET /api/stocks/{symbol}/quote`
+- [x] `GET /api/stocks/{symbol}/ohlcv`
+- [x] `GET /api/stocks/{symbol}/info`
+- [x] `GET /api/stocks/search?q=`
+- [x] `GET /health`
 - [ ] Test all with Swagger / HTTP file
 
 ### Frontend — Blazor Shell
-- [ ] Install SignalR client NuGet
-- [ ] `StockHubService.cs` connection wrapper
-- [ ] `MainLayout.razor` — sidebar nav + top bar
-- [ ] `WatchlistPage.razor` — list with live price badges
+- [x] Install SignalR client NuGet
+- [x] `StockHubService.cs` connection wrapper
+- [x] `MainLayout.razor` — sidebar nav + top bar
+- [x] `WatchlistPage.razor` — list with live price badges
 - [ ] Confirm live updates visible in browser
 
 ---
@@ -167,6 +163,8 @@ _None yet_
 ## Done ✅
 
 _Move completed items here with date_
+
+- [x] 2026-06-17 — Phase 1 foundation implemented: Core models/interfaces, Yahoo provider, Redis cache/pub-sub, EF migration + seed data, SignalR hub, ingestion background service, REST stock endpoints, health endpoint, Blazor watchlist, and GitHub Actions CI.
 
 ---
 

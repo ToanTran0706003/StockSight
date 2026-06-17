@@ -13,9 +13,13 @@ public class StockHub : Hub
     public Task Subscribe(string symbol)
         => Groups.AddToGroupAsync(Context.ConnectionId, GroupFor(symbol));
 
+    public Task SubscribeToSymbol(string symbol) => Subscribe(symbol);
+
     /// <summary>Unsubscribe the caller from a symbol's updates.</summary>
     public Task Unsubscribe(string symbol)
         => Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupFor(symbol));
+
+    public Task UnsubscribeFromSymbol(string symbol) => Unsubscribe(symbol);
 
     /// <summary>Group name convention for a symbol.</summary>
     public static string GroupFor(string symbol) => $"symbol:{symbol.Trim().ToUpperInvariant()}";
