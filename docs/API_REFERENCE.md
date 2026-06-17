@@ -1,6 +1,6 @@
 # API Reference — StockSight
 
-**Base URL (dev):** `https://localhost:7001/api`  
+**Base URL (dev):** `https://localhost:7080/api`
 **Base URL (prod):** `https://stocksight-api.railway.app/api`  
 **Auth:** Bearer JWT token in `Authorization` header (required on marked endpoints)  
 **Format:** All requests and responses are `application/json`
@@ -231,19 +231,17 @@ Get AI-generated trading signal for a symbol.
 **Response 200:**
 ```json
 {
+  "id": "uuid",
   "symbol": "AAPL",
-  "action": "BUY",
+  "action": "Buy",
   "confidence": 72.5,
   "reason": "RSI oversold (28.3), MACD bullish crossover, positive sentiment from recent earnings news.",
   "sentimentScore": 0.68,
-  "indicators": {
-    "rsi": 28.3,
-    "macdCrossover": "Bullish",
-    "bollingerPosition": "LowerBand"
-  },
-  "generatedAt": "2024-11-15T14:30:00Z"
+  "generatedUtc": "2024-11-15T14:30:00Z"
 }
 ```
+
+Available actions: `Buy`, `Sell`, `Hold`
 
 ---
 
@@ -259,11 +257,7 @@ Run a backtest simulation.
   "strategy": "SmaCrossover",
   "from": "2023-01-01",
   "to": "2024-01-01",
-  "initialCapital": 10000.00,
-  "strategyParams": {
-    "fastPeriod": 20,
-    "slowPeriod": 50
-  }
+  "initialCapital": 10000.00
 }
 ```
 

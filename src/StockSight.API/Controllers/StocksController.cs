@@ -15,11 +15,13 @@ public class StocksController : ControllerBase
 {
     private readonly IStockDataProvider _provider;
     private readonly ICacheService _cache;
+    private readonly ISignalEngine? _signalEngine;
 
-    public StocksController(IStockDataProvider provider, ICacheService cache)
+    public StocksController(IStockDataProvider provider, ICacheService cache, ISignalEngine? signalEngine = null)
     {
         _provider = provider;
         _cache = cache;
+        _signalEngine = signalEngine;
     }
 
     /// <summary>GET /api/stocks/{symbol} — latest quote (cached ~30s).</summary>
@@ -208,6 +210,16 @@ public class StocksController : ControllerBase
             currentUpper = current?.Upper,
             currentLower = current?.Lower
         });
+    }
+
+    [HttpGet("{symbol}/signal")]
+    public async Task<ActionResult<TradeSignal>> GetSignal(string symbol, CancellationToken ct)
+    {
+        if (_signalEngine is null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "Signal engine is not available.");
+
+        var signal = await _signalEngine.AnalyzeAsync(symbol, ct);
+        return Ok(signal);
     }
 
     private async Task<IReadOnlyList<OhlcvBar>> GetIndicatorBarsAsync(

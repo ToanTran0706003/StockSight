@@ -1,0 +1,32 @@
+<section class="signal-badge @ActionClass" title="@Signal?.Reason">
+    <div>
+        <span class="status">AI Signal</span>
+        <strong>@ActionText</strong>
+    </div>
+    <div class="confidence">
+        <span>@ConfidenceText</span>
+        <div class="confidence-track">
+            <div class="confidence-fill" style="width:@ConfidenceWidth"></div>
+        </div>
+    </div>
+    <p>@(Signal?.Reason ?? "Loading signal...")</p>
+</section>
+
+@code {
+    [Parameter]
+    public TradeSignal? Signal { get; set; }
+
+    private string ActionText => Signal?.Action.ToString().ToUpperInvariant() ?? "LOADING";
+
+    private string ConfidenceText => Signal is null ? "--" : $"{Signal.Confidence:N0}% confidence";
+
+    private string ConfidenceWidth => Signal is null ? "0%" : $"{Math.Clamp(Signal.Confidence, 0m, 100m):N0}%";
+
+    private string ActionClass => Signal?.Action switch
+    {
+        SignalAction.Buy => "buy",
+        SignalAction.Sell => "sell",
+        SignalAction.Hold => "hold",
+        _ => "hold"
+    };
+}

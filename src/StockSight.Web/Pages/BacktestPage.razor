@@ -1,0 +1,162 @@
+@page "/backtest"
+@inject HttpClient Http
+
+<PageTitle>Backtest - StockSight</PageTitle>
+
+<h1>Backtest</h1>
+
+<section class="backtest-form">
+    <label>
+        Symbol
+        <input @bind="request.Symbol" />
+    </label>
+    <label>
+        Strategy
+        <select @bind="request.Strategy">
+            <option value="Macd">MACD</option>
+            <option value="SmaCrossover">SMA Crossover</option>
+            <option value="RsiReversal">RSI Reversal</option>
+        </select>
+    </label>
+    <label>
+        From
+        <input type="date" @bind="request.From" />
+    </label>
+    <label>
+        To
+        <input type="date" @bind="request.To" />
+    </label>
+    <label>
+        Initial Capital
+        <input type="number" min="100" step="100" @bind="request.InitialCapital" />
+    </label>
+    <button @onclick="RunAsync" disabled="@running">Run</button>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="error">@error</p>
+}
+
+@if (result is not null)
+{
+    <section class="metrics-grid">
+        <article><span class="status">Final Value</span><strong>@Money(result.FinalValue)</strong></article>
+        <article><span class="status">Return</span><strong class="@(result.TotalReturnPercent >= 0 ? "up" : "down")">@result.TotalReturnPercent.ToString("N2")%</strong></article>
+        <article><span class="status">Sharpe</span><strong>@result.SharpeRatio.ToString("N2")</strong></article>
+        <article><span class="status">Max Drawdown</span><strong class="down">@result.MaxDrawdownPercent.ToString("N2")%</strong></article>
+        <article><span class="status">Win Rate</span><strong>@result.WinRate.ToString("N2")%</strong></article>
+        <article><span class="status">Trades</span><strong>@result.TotalTrades</strong></article>
+    </section>
+
+    <IndicatorPaneComponent
+        Title="Equity Curve"
+        Subtitle="@($"{result.Strategy} on {result.Symbol}")"
+        Lines="equityLines" />
+
+    <section class="trade-log">
+        <h2>Trade Log</h2>
+        <table class="ticks">
+            <thead>
+                <tr><th>Date</th><th>Action</th><th>Price</th><th>Shares</th><th>Value</th><th>P&amp;L</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var trade in result.Trades)
+                {
+                    <tr>
+                        <td>@trade.Date.ToString("yyyy-MM-dd")</td>
+                        <td>@trade.Action</td>
+                        <td>@Money(trade.Price)</td>
+                        <td>@trade.Shares.ToString("N4")</td>
+                        <td>@Money(trade.Value)</td>
+                        <td class="@(trade.PnL >= 0 ? "up" : "down")">@(trade.PnL?.ToString("N2") ?? "--")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private BacktestForm request = new()
+    {
+        Symbol = "AAPL",
+        Strategy = "Macd",
+        From = DateTime.UtcNow.Date.AddYears(-1),
+        To = DateTime.UtcNow.Date,
+        InitialCapital = 10_000m
+    };
+    private BacktestResultDto? result;
+    private IReadOnlyList<IndicatorPaneComponent.PaneLine> equityLines = Array.Empty<IndicatorPaneComponent.PaneLine>();
+    private bool running;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RunAsync();
+    }
+
+    private async Task RunAsync()
+    {
+        running = true;
+        error = null;
+
+        try
+        {
+            using var response = await Http.PostAsJsonAsync("api/backtest", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                error = await response.Content.ReadAsStringAsync();
+                return;
+            }
+
+            result = await response.Content.ReadFromJsonAsync<BacktestResultDto>();
+            equityLines = result?.EquityCurve is null
+                ? Array.Empty<IndicatorPaneComponent.PaneLine>()
+                :
+                [
+                    new("Equity", "#38bdf8", result.EquityCurve.Select(p => new IndicatorPoint(p.Date, p.Value)).ToArray())
+                ];
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            running = false;
+        }
+    }
+
+    private static string Money(decimal value) => value.ToString("C2");
+
+    private class BacktestForm
+    {
+        public string Symbol { get; set; } = "AAPL";
+        public string Strategy { get; set; } = "SmaCrossover";
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+        public decimal InitialCapital { get; set; }
+    }
+
+    private record BacktestResultDto(
+        string Symbol,
+        string Strategy,
+        DateTime From,
+        DateTime To,
+        decimal InitialCapital,
+        decimal FinalValue,
+        decimal TotalReturnPercent,
+        decimal SharpeRatio,
+        decimal MaxDrawdownPercent,
+        decimal WinRate,
+        int TotalTrades,
+        int WinningTrades,
+        int LosingTrades,
+        IReadOnlyList<EquityPointDto> EquityCurve,
+        IReadOnlyList<TradeDto> Trades);
+
+    private record EquityPointDto(DateTime Date, decimal Value);
+
+    private record TradeDto(DateTime Date, string Action, decimal Price, decimal Shares, decimal Value, decimal? PnL);
+}

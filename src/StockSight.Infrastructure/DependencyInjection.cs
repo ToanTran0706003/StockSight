@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using StockSight.Core.Interfaces;
+using StockSight.Infrastructure.AI;
 using StockSight.Infrastructure.Caching;
 using StockSight.Infrastructure.Data;
 using StockSight.Infrastructure.MarketData;
@@ -37,6 +38,8 @@ public static class DependencyInjection
 
         // --- Market data ---
         services.AddSingleton<IStockDataProvider, YahooStockDataProvider>();
+        services.AddSingleton<INewsService, NewsSentimentAnalyzer>();
+        services.AddSingleton<ISignalEngine, SignalEngine>();
 
         return services;
     }

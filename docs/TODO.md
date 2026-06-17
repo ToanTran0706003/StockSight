@@ -5,13 +5,13 @@
 
 ---
 
-## Current Sprint — Phase 1: Foundation
+## Current Sprint — Phase 4: Portfolio, Alerts, Auth & News
 
 ### In Progress
-_None — Phase 1 foundation is implemented._
+_None — Phase 3 is implemented._
 
 ### Up Next
-- [ ] Start Phase 3 AI signals + backtesting
+- [ ] Start Phase 4 portfolio, alerts, auth, and news
 
 ### Blocked
 _None yet_
@@ -119,14 +119,14 @@ _None yet_
 
 ## Phase 3 Checklist (starts after Phase 2 complete)
 
-- [ ] `SignalEngine.cs` — combined rule + sentiment
-- [ ] `RuleBasedSignalAnalyzer.cs` — RSI, MACD, Bollinger rules
-- [ ] `NewsSentimentAnalyzer.cs` — OpenAI integration
-- [ ] `SignalBadge.razor` component
-- [ ] `BacktestEngine.cs` with metrics calculation
-- [ ] 3 built-in strategies (SMA crossover, RSI reversal, MACD)
-- [ ] Backtest API endpoint
-- [ ] `BacktestPage.razor` with equity curve chart
+- [x] `SignalEngine.cs` — combined rule + sentiment
+- [x] `RuleBasedSignalAnalyzer.cs` — RSI, MACD, Bollinger rules
+- [x] `NewsSentimentAnalyzer.cs` — OpenAI integration
+- [x] `SignalBadge.razor` component
+- [x] `BacktestEngine.cs` with metrics calculation
+- [x] 3 built-in strategies (SMA crossover, RSI reversal, MACD)
+- [x] Backtest API endpoint
+- [x] `BacktestPage.razor` with equity curve chart
 
 ---
 
@@ -167,6 +167,7 @@ _Move completed items here with date_
 - [x] 2026-06-17 — Phase 1 foundation implemented: Core models/interfaces, Yahoo provider, Redis cache/pub-sub, EF migration + seed data, SignalR hub, ingestion background service, REST stock endpoints, health endpoint, Blazor watchlist, and GitHub Actions CI.
 - [x] 2026-06-17 — Phase 2 chart foundation implemented: TradingView Lightweight Charts interop, stock detail page, interval selector, SMA/EMA/Bollinger overlays, RSI/MACD summary, indicator API endpoints, fallback market data, and indicator unit tests.
 - [x] 2026-06-17 — Phase 2 completed: RSI line pane with 30/70 guide lines and MACD pane with MACD/signal lines plus histogram.
+- [x] 2026-06-17 — Phase 3 completed: combined technical/news signal engine, OpenAI-ready sentiment analyzer with fallback, signal badge/history UI, backtest engine, SMA/RSI/MACD strategies, backtest API, backtest page, and 20 passing tests.
 
 ---
 

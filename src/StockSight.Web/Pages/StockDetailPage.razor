@@ -25,6 +25,8 @@
     </div>
 </section>
 
+<SignalBadge Signal="signal" />
+
 <section class="tool-strip">
     <div class="segmented">
         @foreach (var option in intervals)
@@ -79,6 +81,33 @@
     </article>
 </section>
 
+<section class="signal-history">
+    <h2>Signal History</h2>
+    @if (signalHistory.Count == 0)
+    {
+        <p class="status">No signals generated yet.</p>
+    }
+    else
+    {
+        <table class="ticks">
+            <thead>
+                <tr><th>Time</th><th>Action</th><th>Confidence</th><th>Reason</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in signalHistory)
+                {
+                    <tr>
+                        <td>@item.GeneratedUtc.ToString("HH:mm:ss") UTC</td>
+                        <td>@item.Action</td>
+                        <td>@item.Confidence.ToString("N0")%</td>
+                        <td>@item.Reason</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
 @code {
     [Parameter]
     public string Symbol { get; set; } = "AAPL";
@@ -94,6 +123,8 @@
     private ChartComponent? chart;
     private StockInfo? info;
     private StockTick? quote;
+    private TradeSignal? signal;
+    private readonly List<TradeSignal> signalHistory = new();
     private RsiResponse? rsi;
     private MacdResponse? macd;
     private IReadOnlyList<OhlcvBar> bars = Array.Empty<OhlcvBar>();
@@ -149,6 +180,9 @@
         {
             info = await Http.GetFromJsonAsync<StockInfo>($"api/stocks/{symbol}/info");
             quote = await Http.GetFromJsonAsync<StockTick>($"api/stocks/{symbol}/quote");
+            signal = await Http.GetFromJsonAsync<TradeSignal>($"api/stocks/{symbol}/signal", SignalJsonOptions);
+            if (signal is not null)
+                AddSignalHistory(signal);
 
             var from = DateTime.UtcNow.AddDays(interval switch
             {
@@ -258,12 +292,24 @@
         });
     }
 
+    private void AddSignalHistory(TradeSignal next)
+    {
+        signalHistory.Insert(0, next);
+        if (signalHistory.Count > 10)
+            signalHistory.RemoveAt(signalHistory.Count - 1);
+    }
+
     private static string Clean(string value) => value.Trim().ToUpperInvariant();
 
     private static string Display(decimal? value) => value?.ToString("N2") ?? "--";
 
     private static IReadOnlyList<IndicatorPoint> ConstantLine(IEnumerable<DateTime> timestamps, decimal value)
         => timestamps.Select(t => new IndicatorPoint(t, value)).ToArray();
+
+    private static readonly JsonSerializerOptions SignalJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public async ValueTask DisposeAsync()
     {

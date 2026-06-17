@@ -237,6 +237,116 @@ table.ticks th, table.ticks td {
     border-radius: 8px;
 }
 
+.signal-badge {
+    display: grid;
+    grid-template-columns: minmax(160px, 220px) 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: .85rem;
+    margin-bottom: 1rem;
+    border: 1px solid #334155;
+    border-left-width: 4px;
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.signal-badge.buy { border-left-color: var(--up); }
+.signal-badge.sell { border-left-color: var(--down); }
+.signal-badge.hold { border-left-color: #94a3b8; }
+
+.signal-badge strong {
+    display: block;
+    font-size: 1.35rem;
+}
+
+.signal-badge p {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #cbd5e1;
+}
+
+.confidence {
+    display: grid;
+    gap: .35rem;
+}
+
+.confidence-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+.signal-history,
+.trade-log {
+    margin-top: 1rem;
+}
+
+.signal-history h2,
+.trade-log h2 {
+    font-size: 1.1rem;
+}
+
+.backtest-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem;
+    align-items: end;
+    margin-bottom: 1rem;
+}
+
+.backtest-form label {
+    display: grid;
+    gap: .3rem;
+    color: #94a3b8;
+}
+
+.backtest-form input,
+.backtest-form select {
+    min-height: 38px;
+    padding: .45rem .6rem;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+}
+
+.backtest-form button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #0f172a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.metrics-grid article {
+    padding: .8rem;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.metrics-grid strong {
+    display: block;
+    margin-top: .25rem;
+    font-size: 1.25rem;
+}
+
 #blazor-error-ui {
     display: none;
     position: fixed;

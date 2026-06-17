@@ -6,6 +6,8 @@ Phase 1 is implemented: the API can fetch/cache quotes, the background ingestion
 
 Phase 2 is implemented: stock detail pages render candlesticks with TradingView Lightweight Charts, interval switching, SMA/EMA/Bollinger overlays, RSI/MACD sub-pane charts, summaries, and server-side indicator endpoints.
 
+Phase 3 is implemented: the app generates BUY/SELL/HOLD signals from technical rules plus news sentiment, displays signal confidence on stock detail pages, and runs backtests with SMA crossover, RSI reversal, and MACD strategies.
+
 ## Architecture
 
 ```
@@ -111,4 +113,4 @@ cache-aside stock endpoints, health endpoint, background quote ingestion, Blazor
 watchlist/live-ticker pages, GitHub Actions CI, and unit tests.
 
 **Stub / next steps:** alert evaluation pipeline, portfolio CRUD endpoints,
-authentication, backtesting, and the OpenAI-powered insights service.
+authentication, persistent news article UI, and production deployment.

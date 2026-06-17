@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.PostgreSql;
+using System.Text.Json.Serialization;
 using StockSight.API.BackgroundServices;
 using StockSight.API.Hubs;
 using StockSight.Core.Interfaces;
@@ -8,7 +9,8 @@ using StockSight.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---- MVC + OpenAPI ----
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
