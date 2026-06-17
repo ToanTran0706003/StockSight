@@ -5,20 +5,34 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StockSight</title>
+    <meta name="description" content="StockSight is a dark-first fintech dashboard for realtime quotes, technical indicators, backtests, portfolios, and alerts." />
+    <meta property="og:title" content="StockSight" />
+    <meta property="og:description" content="Realtime market dashboard with charts, indicators, alerts, and portfolio P&L." />
     <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="css/app.css" />
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
 <body>
     <div id="app">
-        <div style="padding:2rem;font-family:sans-serif">Loading StockSight…</div>
+        <div class="app-loader">
+            <div class="app-loader-card">
+                <strong>StockSight</strong>
+                <span class="status">Loading market workspace...</span>
+                <span class="skeleton skeleton-line"></span>
+                <span class="skeleton skeleton-line skeleton-short"></span>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        <a class="dismiss">Dismiss</a>
     </div>
 
     <script src="js/chart-interop.js"></script>

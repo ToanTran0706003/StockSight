@@ -5,108 +5,134 @@
 
 <PageTitle>@Symbol - StockSight</PageTitle>
 
-<section class="stock-header">
-    <div>
-        <h1>@symbol</h1>
-        <p>@(info?.CompanyName ?? "Loading company info")</p>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Stock detail</span>
+            <h1>@symbol</h1>
+            <p class="page-lead">@(info?.CompanyName ?? "Loading company info")</p>
+        </div>
+        <div class="quote-summary">
+            @if (quote is null)
+            {
+                <span class="skeleton skeleton-price"></span>
+                <span class="status">Loading quote</span>
+            }
+            else
+            {
+                <strong class="price-lg">@quote.Price.ToString("N2")</strong>
+                <span class="change-pill @(quote.Change >= 0 ? "up" : "down")">
+                    @(quote.Change >= 0 ? "▲" : "▼") @quote.Change.ToString("N2") (@quote.ChangePercent.ToString("N2")%)
+                </span>
+            }
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <p class="error">@error</p>
+    }
+
+    <section class="split-grid">
+        <div class="chart-shell">
+            <div class="surface-header">
+                <div>
+                    <span class="eyebrow">Candles</span>
+                    <h2>@symbol price action</h2>
+                </div>
+                <span class="status-pill">@interval candles</span>
+            </div>
+
+            <section class="tool-strip" aria-label="Chart controls">
+                <div class="segmented">
+                    @foreach (var option in intervals)
+                    {
+                        <button class="@(interval == option ? "active" : null)" @onclick="() => ChangeIntervalAsync(option)">
+                            @option
+                        </button>
+                    }
+                </div>
+                <label class="checkbox-pill"><input type="checkbox" @bind="showSma" @bind:after="ReloadIndicatorsAsync" /> SMA 20</label>
+                <label class="checkbox-pill"><input type="checkbox" @bind="showEma" @bind:after="ReloadIndicatorsAsync" /> EMA 50</label>
+                <label class="checkbox-pill"><input type="checkbox" @bind="showBollinger" @bind:after="ReloadIndicatorsAsync" /> Bollinger</label>
+            </section>
+
+            <ChartComponent @ref="chart" Bars="bars" Lines="chartLines" />
+        </div>
+
+        <aside class="page-stack">
+            <SignalBadge Signal="signal" />
+            <NewsPanel Symbol="@symbol" />
+        </aside>
+    </section>
+
+    <section class="indicator-summary">
+        <article>
+            <span class="status">RSI 14</span>
+            <strong class="metric-value">@Display(rsi?.CurrentValue)</strong>
+            <span>@(rsi?.Signal ?? "Neutral")</span>
+        </article>
+        <article>
+            <span class="status">MACD</span>
+            <strong class="metric-value">@Display(macd?.CurrentMacd)</strong>
+            <span>Signal @Display(macd?.CurrentSignal)</span>
+        </article>
+        <article>
+            <span class="status">Market</span>
+            <strong>@(info?.Exchange ?? "Yahoo Finance")</strong>
+            <span>@bars.Count candles loaded</span>
+        </article>
+    </section>
+
+    <div class="indicator-panes">
+        <IndicatorPaneComponent
+            Title="RSI 14"
+            Subtitle="Momentum oscillator"
+            Minimum="@(0m)"
+            Maximum="@(100m)"
+            Lines="rsiPaneLines" />
+
+        <IndicatorPaneComponent
+            Title="MACD"
+            Subtitle="MACD line, signal line, histogram"
+            Lines="macdPaneLines"
+            Histogram="macdHistogram" />
     </div>
-    <div class="quote-summary">
-        @if (quote is null)
+
+    <section class="surface signal-history">
+        <div class="surface-header">
+            <h2>Signal history</h2>
+            <span class="status-pill">@signalHistory.Count snapshots</span>
+        </div>
+        @if (signalHistory.Count == 0)
         {
-            <strong class="price">Loading</strong>
+            <div class="empty-state">
+                <strong>No signal snapshots yet.</strong>
+                <span>The signal engine will appear here after the first successful refresh.</span>
+            </div>
         }
         else
         {
-            <strong class="price">@quote.Price.ToString("N2")</strong>
-            <span class="@(quote.Change >= 0 ? "up" : "down")">
-                @quote.Change.ToString("N2") (@quote.ChangePercent.ToString("N2")%)
-            </span>
+            <div class="table-wrap">
+                <table class="ticks">
+                    <thead>
+                        <tr><th>Time</th><th>Action</th><th>Confidence</th><th>Reason</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in signalHistory)
+                        {
+                            <tr>
+                                <td>@item.GeneratedUtc.ToString("HH:mm:ss") UTC</td>
+                                <td>@item.Action</td>
+                                <td>@item.Confidence.ToString("N0")%</td>
+                                <td>@item.Reason</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
-    </div>
-</section>
-
-<SignalBadge Signal="signal" />
-<NewsPanel Symbol="@symbol" />
-
-<section class="tool-strip">
-    <div class="segmented">
-        @foreach (var option in intervals)
-        {
-            <button class="@(interval == option ? "active" : null)" @onclick="() => ChangeIntervalAsync(option)">
-                @option
-            </button>
-        }
-    </div>
-    <label><input type="checkbox" @bind="showSma" @bind:after="ReloadIndicatorsAsync" /> SMA 20</label>
-    <label><input type="checkbox" @bind="showEma" @bind:after="ReloadIndicatorsAsync" /> EMA 50</label>
-    <label><input type="checkbox" @bind="showBollinger" @bind:after="ReloadIndicatorsAsync" /> Bollinger</label>
-</section>
-
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
-
-<ChartComponent @ref="chart" Bars="bars" Lines="chartLines" />
-
-<div class="indicator-panes">
-    <IndicatorPaneComponent
-        Title="RSI 14"
-        Subtitle="Momentum oscillator"
-        Minimum="@(0m)"
-        Maximum="@(100m)"
-        Lines="rsiPaneLines" />
-
-    <IndicatorPaneComponent
-        Title="MACD"
-        Subtitle="MACD line, signal line, histogram"
-        Lines="macdPaneLines"
-        Histogram="macdHistogram" />
-</div>
-
-<section class="indicator-summary">
-    <article>
-        <span class="status">RSI 14</span>
-        <strong>@Display(rsi?.CurrentValue)</strong>
-        <span>@(rsi?.Signal ?? "Neutral")</span>
-    </article>
-    <article>
-        <span class="status">MACD</span>
-        <strong>@Display(macd?.CurrentMacd)</strong>
-        <span>Signal @Display(macd?.CurrentSignal)</span>
-    </article>
-    <article>
-        <span class="status">Market</span>
-        <strong>@(info?.Exchange ?? "Yahoo Finance")</strong>
-        <span>@interval candles</span>
-    </article>
-</section>
-
-<section class="signal-history">
-    <h2>Signal History</h2>
-    @if (signalHistory.Count == 0)
-    {
-        <p class="status">No signals generated yet.</p>
-    }
-    else
-    {
-        <table class="ticks">
-            <thead>
-                <tr><th>Time</th><th>Action</th><th>Confidence</th><th>Reason</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var item in signalHistory)
-                {
-                    <tr>
-                        <td>@item.GeneratedUtc.ToString("HH:mm:ss") UTC</td>
-                        <td>@item.Action</td>
-                        <td>@item.Confidence.ToString("N0")%</td>
-                        <td>@item.Reason</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    </section>
 </section>
 
 @code {

@@ -4,38 +4,60 @@
 
 <PageTitle>Live Ticker</PageTitle>
 
-<h1>Live Ticker</h1>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Live ticker</span>
+            <h1>Realtime tape</h1>
+            <p class="page-lead">Subscribe to a symbol and watch incoming ticks stack into a compact market tape.</p>
+        </div>
+        <span class="status-pill @(connected ? "live" : "warn")">@statusText</span>
+    </header>
 
-<div class="controls">
-    <input @bind="symbol" placeholder="Symbol e.g. AAPL" />
-    <button @onclick="SubscribeAsync" disabled="@(!connected)">Subscribe</button>
-    <span class="status">@statusText</span>
-</div>
+    <section class="form-panel">
+        <div class="controls">
+            <input @bind="symbol" placeholder="Symbol e.g. AAPL" aria-label="Symbol to subscribe" />
+            <button @onclick="SubscribeAsync" disabled="@(!connected)">Subscribe</button>
+            <span class="status">Newest ticks appear first.</span>
+        </div>
+    </section>
 
-@if (ticks.Count == 0)
-{
-    <p><em>No ticks yet. Subscribe to a symbol to start streaming.</em></p>
-}
-else
-{
-    <table class="ticks">
-        <thead>
-            <tr><th>Symbol</th><th>Price</th><th>Change</th><th>%</th><th>Time (UTC)</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var t in ticks)
-            {
-                <tr>
-                    <td>@t.Symbol</td>
-                    <td>@t.Price.ToString("N2")</td>
-                    <td class="@(t.Change >= 0 ? "up" : "down")">@t.Change.ToString("N2")</td>
-                    <td class="@(t.Change >= 0 ? "up" : "down")">@t.ChangePercent.ToString("N2")%</td>
-                    <td>@t.TimestampUtc.ToString("HH:mm:ss")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    @if (ticks.Count == 0)
+    {
+        <section class="empty-state">
+            <strong>No ticks received yet.</strong>
+            <span>Subscribe to a symbol to start streaming realtime updates.</span>
+        </section>
+    }
+    else
+    {
+        <section class="surface trade-log">
+            <div class="surface-header">
+                <h2>Tick stream</h2>
+                <span class="status-pill">@ticks.Count rows</span>
+            </div>
+            <div class="table-wrap">
+                <table class="ticks">
+                    <thead>
+                        <tr><th>Symbol</th><th>Price</th><th>Change</th><th>%</th><th>Time (UTC)</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in ticks)
+                        {
+                            <tr>
+                                <td>@t.Symbol</td>
+                                <td>@t.Price.ToString("N2")</td>
+                                <td class="@(t.Change >= 0 ? "up" : "down")">@(t.Change >= 0 ? "▲" : "▼") @t.Change.ToString("N2")</td>
+                                <td class="@(t.Change >= 0 ? "up" : "down")">@(t.Change >= 0 ? "▲" : "▼") @t.ChangePercent.ToString("N2")%</td>
+                                <td>@t.TimestampUtc.ToString("HH:mm:ss")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</section>
 
 @code {
     private string symbol = "AAPL";

@@ -6,50 +6,81 @@
 
 <PageTitle>Alerts - StockSight</PageTitle>
 
-<h1>Alerts</h1>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Alerts</span>
+            <h1>Price triggers</h1>
+            <p class="page-lead">Create above/below alerts and receive realtime notifications when watched symbols cross your target.</p>
+        </div>
+        <span class="status-pill @(hubConnected ? "live" : "warn")">@(hubConnected ? "Alert stream online" : "Alert stream offline")</span>
+    </header>
 
-@if (!string.IsNullOrWhiteSpace(toast))
-{
-    <p class="notice">@toast</p>
-}
+    @if (!string.IsNullOrWhiteSpace(toast))
+    {
+        <p class="notice">@toast</p>
+    }
 
-<section class="backtest-form">
-    <label>Symbol<input @bind="form.Symbol" /></label>
-    <label>Target Price<input type="number" min="0.01" step="0.01" @bind="form.TargetPrice" /></label>
-    <label>
-        Direction
-        <select @bind="form.Direction">
-            <option value="Above">Above</option>
-            <option value="Below">Below</option>
-        </select>
-    </label>
-    <button @onclick="CreateAsync">Create</button>
-</section>
+    <section class="form-panel">
+        <div class="surface-header">
+            <h2>Create alert</h2>
+            <span class="status">Above or below target price</span>
+        </div>
+        <div class="backtest-form">
+            <label>Symbol<input @bind="form.Symbol" /></label>
+            <label>Target price<input type="number" min="0.01" step="0.01" @bind="form.TargetPrice" /></label>
+            <label>
+                Direction
+                <select @bind="form.Direction">
+                    <option value="Above">Above</option>
+                    <option value="Below">Below</option>
+                </select>
+            </label>
+            <button @onclick="CreateAsync">Create alert</button>
+        </div>
+    </section>
 
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <p class="error">@error</p>
+    }
 
-<section class="trade-log">
-    <table class="ticks">
-        <thead>
-            <tr><th>Symbol</th><th>Direction</th><th>Target</th><th>Status</th><th>Created</th><th></th></tr>
-        </thead>
-        <tbody>
-            @foreach (var alert in alerts)
-            {
-                <tr>
-                    <td>@alert.Symbol</td>
-                    <td>@alert.Direction</td>
-                    <td>@alert.TargetPrice.ToString("C2")</td>
-                    <td>@(alert.IsTriggered ? "Triggered" : "Active")</td>
-                    <td>@alert.CreatedUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td><button class="link-button" @onclick="() => DeleteAsync(alert.Id)">Delete</button></td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <section class="surface trade-log">
+        <div class="surface-header">
+            <h2>Active rules</h2>
+            <span class="status-pill">@alerts.Count alerts</span>
+        </div>
+        @if (alerts.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No alerts yet.</strong>
+                <span>Create a rule above to watch a symbol in realtime.</span>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="ticks">
+                    <thead>
+                        <tr><th>Symbol</th><th>Direction</th><th>Target</th><th>Status</th><th>Created</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var alert in alerts)
+                        {
+                            <tr>
+                                <td>@alert.Symbol</td>
+                                <td>@alert.Direction</td>
+                                <td>@alert.TargetPrice.ToString("C2")</td>
+                                <td><span class="status-pill @(alert.IsTriggered ? "warn" : "live")">@(alert.IsTriggered ? "Triggered" : "Active")</span></td>
+                                <td>@alert.CreatedUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td><button class="link-button" @onclick="() => DeleteAsync(alert.Id)">Delete</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
 </section>
 
 @code {

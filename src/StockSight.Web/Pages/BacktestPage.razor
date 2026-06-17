@@ -3,79 +3,111 @@
 
 <PageTitle>Backtest - StockSight</PageTitle>
 
-<h1>Backtest</h1>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Backtest lab</span>
+            <h1>Strategy replay</h1>
+            <p class="page-lead">Test a signal rule against historical candles before it becomes a portfolio decision.</p>
+        </div>
+        <span class="status-pill @(running ? "warn" : null)">@(running ? "Running" : "Ready")</span>
+    </header>
 
-<section class="backtest-form">
-    <label>
-        Symbol
-        <input @bind="request.Symbol" />
-    </label>
-    <label>
-        Strategy
-        <select @bind="request.Strategy">
-            <option value="Macd">MACD</option>
-            <option value="SmaCrossover">SMA Crossover</option>
-            <option value="RsiReversal">RSI Reversal</option>
-        </select>
-    </label>
-    <label>
-        From
-        <input type="date" @bind="request.From" />
-    </label>
-    <label>
-        To
-        <input type="date" @bind="request.To" />
-    </label>
-    <label>
-        Initial Capital
-        <input type="number" min="100" step="100" @bind="request.InitialCapital" />
-    </label>
-    <button @onclick="RunAsync" disabled="@running">Run</button>
+    <section class="form-panel">
+        <div class="backtest-form">
+            <label>
+                Symbol
+                <input @bind="request.Symbol" />
+            </label>
+            <label>
+                Strategy
+                <select @bind="request.Strategy">
+                    <option value="Macd">MACD</option>
+                    <option value="SmaCrossover">SMA Crossover</option>
+                    <option value="RsiReversal">RSI Reversal</option>
+                </select>
+            </label>
+            <label>
+                From
+                <input type="date" @bind="request.From" />
+            </label>
+            <label>
+                To
+                <input type="date" @bind="request.To" />
+            </label>
+            <label>
+                Initial capital
+                <input type="number" min="100" step="100" @bind="request.InitialCapital" />
+            </label>
+            <button @onclick="RunAsync" disabled="@running">Run backtest</button>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <p class="error">@error</p>
+    }
+
+    @if (result is null)
+    {
+        <section class="empty-state">
+            <strong>No result loaded yet.</strong>
+            <span>Run a strategy to generate metrics, an equity curve, and a trade log.</span>
+        </section>
+    }
+    else
+    {
+        <section class="metrics-grid">
+            <article><span class="status">Final value</span><strong class="metric-value">@Money(result.FinalValue)</strong></article>
+            <article><span class="status">Return</span><strong class="metric-value @(result.TotalReturnPercent >= 0 ? "up" : "down")">@(result.TotalReturnPercent >= 0 ? "▲" : "▼") @result.TotalReturnPercent.ToString("N2")%</strong></article>
+            <article><span class="status">Sharpe</span><strong class="metric-value">@result.SharpeRatio.ToString("N2")</strong></article>
+            <article><span class="status">Max drawdown</span><strong class="metric-value down">▼ @result.MaxDrawdownPercent.ToString("N2")%</strong></article>
+            <article><span class="status">Win rate</span><strong class="metric-value">@result.WinRate.ToString("N2")%</strong></article>
+            <article><span class="status">Trades</span><strong class="metric-value">@result.TotalTrades</strong></article>
+        </section>
+
+        <section class="surface">
+            <div class="surface-header">
+                <div>
+                    <span class="eyebrow">Equity curve</span>
+                    <h2>@result.Strategy on @result.Symbol</h2>
+                </div>
+                <span class="status-pill">@result.From.ToString("yyyy-MM-dd") to @result.To.ToString("yyyy-MM-dd")</span>
+            </div>
+            <IndicatorPaneComponent
+                Title="Equity"
+                Subtitle="@($"{Money(result.InitialCapital)} starting capital")"
+                Lines="equityLines" />
+        </section>
+
+        <section class="surface trade-log">
+            <div class="surface-header">
+                <h2>Trade log</h2>
+                <span class="status-pill">@result.TotalTrades trades</span>
+            </div>
+            <div class="table-wrap">
+                <table class="ticks">
+                    <thead>
+                        <tr><th>Date</th><th>Action</th><th>Price</th><th>Shares</th><th>Value</th><th>P&amp;L</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trade in result.Trades)
+                        {
+                            <tr>
+                                <td>@trade.Date.ToString("yyyy-MM-dd")</td>
+                                <td>@trade.Action</td>
+                                <td>@Money(trade.Price)</td>
+                                <td>@trade.Shares.ToString("N4")</td>
+                                <td>@Money(trade.Value)</td>
+                                <td class="@(trade.PnL >= 0 ? "up" : "down")">@(trade.PnL >= 0 ? "▲" : "▼") @(trade.PnL?.ToString("N2") ?? "--")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
 </section>
-
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
-
-@if (result is not null)
-{
-    <section class="metrics-grid">
-        <article><span class="status">Final Value</span><strong>@Money(result.FinalValue)</strong></article>
-        <article><span class="status">Return</span><strong class="@(result.TotalReturnPercent >= 0 ? "up" : "down")">@result.TotalReturnPercent.ToString("N2")%</strong></article>
-        <article><span class="status">Sharpe</span><strong>@result.SharpeRatio.ToString("N2")</strong></article>
-        <article><span class="status">Max Drawdown</span><strong class="down">@result.MaxDrawdownPercent.ToString("N2")%</strong></article>
-        <article><span class="status">Win Rate</span><strong>@result.WinRate.ToString("N2")%</strong></article>
-        <article><span class="status">Trades</span><strong>@result.TotalTrades</strong></article>
-    </section>
-
-    <IndicatorPaneComponent
-        Title="Equity Curve"
-        Subtitle="@($"{result.Strategy} on {result.Symbol}")"
-        Lines="equityLines" />
-
-    <section class="trade-log">
-        <h2>Trade Log</h2>
-        <table class="ticks">
-            <thead>
-                <tr><th>Date</th><th>Action</th><th>Price</th><th>Shares</th><th>Value</th><th>P&amp;L</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var trade in result.Trades)
-                {
-                    <tr>
-                        <td>@trade.Date.ToString("yyyy-MM-dd")</td>
-                        <td>@trade.Action</td>
-                        <td>@Money(trade.Price)</td>
-                        <td>@trade.Shares.ToString("N4")</td>
-                        <td>@Money(trade.Value)</td>
-                        <td class="@(trade.PnL >= 0 ? "up" : "down")">@(trade.PnL?.ToString("N2") ?? "--")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </section>
-}
 
 @code {
     private BacktestForm request = new()

@@ -3,9 +3,13 @@
 @inject NavigationManager Nav
 
 <div class="page">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="topbar">
-        <span class="brand">StockSight</span>
-        <nav>
+        <NavLink class="brand" href="" Match="NavLinkMatch.All" aria-label="StockSight home">
+            <span class="brand-mark" aria-hidden="true">S</span>
+            <span>StockSight</span>
+        </NavLink>
+        <nav aria-label="Primary navigation">
             <NavLink href="" Match="NavLinkMatch.All">Home</NavLink>
             <NavLink href="watchlist">Watchlist</NavLink>
             <NavLink href="stock/AAPL">Chart</NavLink>
@@ -17,7 +21,7 @@
         <div class="auth-nav">
             <AuthorizeView>
                 <Authorized>
-                    <span>@context.User.Identity?.Name</span>
+                    <span class="auth-user">@context.User.Identity?.Name</span>
                     <button @onclick="Logout">Logout</button>
                 </Authorized>
                 <NotAuthorized>
@@ -27,7 +31,7 @@
             </AuthorizeView>
         </div>
     </header>
-    <main>
+    <main id="main-content" class="app-main">
         @Body
     </main>
 </div>

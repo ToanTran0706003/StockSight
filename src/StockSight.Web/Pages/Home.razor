@@ -2,14 +2,60 @@
 
 <PageTitle>StockSight</PageTitle>
 
-<h1>StockSight</h1>
+<section class="dashboard-hero fade-in">
+    <div class="hero-copy">
+        <span class="eyebrow">Realtime market workspace</span>
+        <h1 class="hero-title">Read price action, signals, and portfolio risk in one dark console.</h1>
+        <p class="lead">
+            StockSight brings live quotes, technical overlays, backtests, portfolio P&amp;L, and alert workflows into a compact Blazor dashboard built for repeated market checks.
+        </p>
+        <div class="hero-actions">
+            <NavLink class="primary-button" href="watchlist">Open watchlist</NavLink>
+            <NavLink class="secondary-button" href="stock/AAPL">View AAPL chart</NavLink>
+        </div>
+    </div>
 
-<p>Real-time stock dashboard built with ASP.NET Core 8, Blazor WebAssembly and SignalR.</p>
+    <aside class="hero-market-strip" aria-label="StockSight capabilities">
+        <article class="market-tile">
+            <span class="status-pill live">Live SignalR quotes</span>
+            <strong class="num">AAPL 250.33</strong>
+            <span class="up">▲ Streaming tick updates</span>
+        </article>
+        <article class="market-tile">
+            <span class="status-pill">Technical stack</span>
+            <strong>RSI, MACD, SMA, EMA</strong>
+            <span class="status">Candles stay front and center.</span>
+        </article>
+        <article class="market-tile">
+            <span class="status-pill warn">Risk loop</span>
+            <strong>Backtest to portfolio</strong>
+            <span class="status">Run a strategy, then track P&amp;L and alerts.</span>
+        </article>
+    </aside>
+</section>
 
-<ul>
-    <li>Live quotes pushed over SignalR</li>
-    <li>Redis-cached market data</li>
-    <li>PostgreSQL-backed portfolios &amp; alerts</li>
-</ul>
+<section class="dashboard-grid">
+    <article class="surface">
+        <div class="surface-header">
+            <h2>Market scan</h2>
+            <span class="status-pill live">Realtime</span>
+        </div>
+        <p class="page-lead">Watch default symbols, add your own tickers, and jump directly into a detail chart when price moves.</p>
+    </article>
 
-<p>Open the <NavLink href="watchlist">Watchlist</NavLink> to stream default symbols.</p>
+    <article class="surface">
+        <div class="surface-header">
+            <h2>Signal context</h2>
+            <span class="status-pill">Indicators</span>
+        </div>
+        <p class="page-lead">Candles, overlays, RSI, MACD, and news sentiment share one view so signals have context instead of noise.</p>
+    </article>
+
+    <article class="surface">
+        <div class="surface-header">
+            <h2>Execution loop</h2>
+            <span class="status-pill">Portfolio</span>
+        </div>
+        <p class="page-lead">Use backtests, paper trades, position allocation, and alerts to keep decisions connected.</p>
+    </article>
+</section>

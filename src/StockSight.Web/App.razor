@@ -6,7 +6,12 @@
         </Found>
         <NotFound>
             <LayoutView Layout="@typeof(Layout.MainLayout)">
-                <p role="alert">Sorry, there's nothing at this address.</p>
+                <section class="empty-state" role="alert">
+                    <span class="eyebrow">404</span>
+                    <strong>That market view does not exist.</strong>
+                    <span>Check the route or return to the watchlist.</span>
+                    <NavLink class="primary-button" href="watchlist">Open watchlist</NavLink>
+                </section>
             </LayoutView>
         </NotFound>
     </Router>

@@ -16,6 +16,11 @@ TestResults/
 publish/
 *.binlog
 
+## Local agent skills
+.agents/
+skills-lock.json
+docs/CODEX_UI_PROMPT.md
+
 ## Env / secrets
 *.env
 appsettings.*.local.json

@@ -1,10 +1,34 @@
 @inject HttpClient Http
 
 <section class="news-panel">
-    <h2>News Sentiment</h2>
-    @if (articles.Count == 0)
+    <div class="surface-header">
+        <div>
+            <span class="eyebrow">News</span>
+            <h2>Sentiment tape</h2>
+        </div>
+        <span class="status-pill">@Symbol</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(error))
     {
-        <p class="status">Loading news...</p>
+        <p class="error">@error</p>
+    }
+    else if (loading)
+    {
+        <article>
+            <div>
+                <span class="skeleton skeleton-line"></span>
+                <span class="skeleton skeleton-line skeleton-short"></span>
+            </div>
+            <span class="skeleton skeleton-line skeleton-short"></span>
+        </article>
+    }
+    else if (articles.Count == 0)
+    {
+        <div class="empty-state">
+            <strong>No market headlines yet.</strong>
+            <span>Sentiment will appear when the feed returns articles for @Symbol.</span>
+        </div>
     }
     else
     {
@@ -15,7 +39,7 @@
                     <strong>@article.Headline</strong>
                     <span class="status">@article.Source · @article.PublishedUtc.ToString("MMM dd HH:mm") UTC</span>
                 </div>
-                <span class="sentiment @article.Sentiment.ToLowerInvariant()">@article.Sentiment @article.Score.ToString("N2")</span>
+                <span class="sentiment @article.Sentiment.ToLowerInvariant()">@SentimentIcon(article.Sentiment) @article.Sentiment @article.Score.ToString("N2")</span>
             </article>
         }
     }
@@ -26,11 +50,33 @@
     public string Symbol { get; set; } = "AAPL";
 
     private IReadOnlyList<NewsArticleDto> articles = Array.Empty<NewsArticleDto>();
+    private bool loading = true;
+    private string? error;
 
     protected override async Task OnParametersSetAsync()
     {
-        articles = await Http.GetFromJsonAsync<IReadOnlyList<NewsArticleDto>>($"api/news/{Symbol}") ?? Array.Empty<NewsArticleDto>();
+        loading = true;
+        error = null;
+
+        try
+        {
+            articles = await Http.GetFromJsonAsync<IReadOnlyList<NewsArticleDto>>($"api/news/{Symbol}") ?? Array.Empty<NewsArticleDto>();
+        }
+        catch (Exception ex)
+        {
+            error = $"News feed unavailable: {ex.Message}";
+            articles = Array.Empty<NewsArticleDto>();
+        }
+        finally
+        {
+            loading = false;
+        }
     }
+
+    private static string SentimentIcon(string sentiment)
+        => sentiment.Equals("Bullish", StringComparison.OrdinalIgnoreCase) ? "▲"
+            : sentiment.Equals("Bearish", StringComparison.OrdinalIgnoreCase) ? "▼"
+            : "■";
 
     private record NewsArticleDto(
         string Symbol,

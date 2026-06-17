@@ -6,71 +6,114 @@
 
 <PageTitle>Portfolio - StockSight</PageTitle>
 
-<h1>Portfolio</h1>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Portfolio</span>
+            <h1>P&amp;L console</h1>
+            <p class="page-lead">Create a paper portfolio, place simulated trades, and watch allocation and return drift with live prices.</p>
+        </div>
+        <span class="status-pill @(hubConnected ? "live" : "warn")">@(hubConnected ? "Live pricing" : "Pricing offline")</span>
+    </header>
 
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <p class="error">@error</p>
+    }
 
-<section class="backtest-form">
-    <label>Name<input @bind="newPortfolioName" /></label>
-    <label>Initial Cash<input type="number" min="1000" step="500" @bind="newInitialCash" /></label>
-    <button @onclick="CreatePortfolioAsync">Create</button>
-</section>
-
-@if (snapshot is not null)
-{
-    <section class="metrics-grid">
-        <article><span class="status">Total Value</span><strong>@Money(snapshot.TotalValue)</strong></article>
-        <article><span class="status">Cash</span><strong>@Money(snapshot.CashBalance)</strong></article>
-        <article><span class="status">Market Value</span><strong>@Money(snapshot.MarketValue)</strong></article>
-        <article><span class="status">Total P&amp;L</span><strong class="@(snapshot.TotalPnL >= 0 ? "up" : "down")">@Money(snapshot.TotalPnL)</strong></article>
-        <article><span class="status">Return</span><strong class="@(snapshot.TotalPnLPercent >= 0 ? "up" : "down")">@snapshot.TotalPnLPercent.ToString("N2")%</strong></article>
+    <section class="form-panel">
+        <div class="surface-header">
+            <h2>Create portfolio</h2>
+            <span class="status">@portfolios.Count saved</span>
+        </div>
+        <div class="backtest-form">
+            <label>Name<input @bind="newPortfolioName" /></label>
+            <label>Initial cash<input type="number" min="1000" step="500" @bind="newInitialCash" /></label>
+            <button @onclick="CreatePortfolioAsync">Create</button>
+        </div>
     </section>
 
-    <section class="backtest-form">
-        <label>Symbol<input @bind="trade.Symbol" /></label>
-        <label>Shares<input type="number" min="0.0001" step="0.1" @bind="trade.Shares" /></label>
-        <label>Price<input type="number" min="0.01" step="0.01" @bind="trade.Price" /></label>
-        <button @onclick="BuyAsync">Buy</button>
-        <button @onclick="SellAsync">Sell</button>
-    </section>
+    @if (snapshot is null)
+    {
+        <section class="empty-state">
+            <strong>No portfolio loaded.</strong>
+            <span>Create one above to begin tracking positions.</span>
+        </section>
+    }
+    else
+    {
+        <section class="metrics-grid">
+            <article><span class="status">Total value</span><strong class="metric-value">@Money(snapshot.TotalValue)</strong></article>
+            <article><span class="status">Cash</span><strong class="metric-value">@Money(snapshot.CashBalance)</strong></article>
+            <article><span class="status">Market value</span><strong class="metric-value">@Money(snapshot.MarketValue)</strong></article>
+            <article><span class="status">Total P&amp;L</span><strong class="metric-value @(snapshot.TotalPnL >= 0 ? "up" : "down")">@(snapshot.TotalPnL >= 0 ? "▲" : "▼") @Money(snapshot.TotalPnL)</strong></article>
+            <article><span class="status">Return</span><strong class="metric-value @(snapshot.TotalPnLPercent >= 0 ? "up" : "down")">@(snapshot.TotalPnLPercent >= 0 ? "▲" : "▼") @snapshot.TotalPnLPercent.ToString("N2")%</strong></article>
+        </section>
 
-    <section class="allocation-list">
-        @foreach (var position in snapshot.Positions)
+        <section class="form-panel">
+            <div class="surface-header">
+                <h2>Trade ticket</h2>
+                <span class="status-pill">@snapshot.Name</span>
+            </div>
+            <div class="backtest-form">
+                <label>Symbol<input @bind="trade.Symbol" /></label>
+                <label>Shares<input type="number" min="0.0001" step="0.1" @bind="trade.Shares" /></label>
+                <label>Price<input type="number" min="0.01" step="0.01" @bind="trade.Price" /></label>
+                <button @onclick="BuyAsync">Buy</button>
+                <button class="secondary-button" @onclick="SellAsync">Sell</button>
+            </div>
+        </section>
+
+        @if (snapshot.Positions.Count == 0)
         {
-            var width = snapshot.MarketValue == 0 ? 0 : position.MarketValue / snapshot.MarketValue * 100m;
-            <article>
-                <div><strong>@position.Symbol</strong><span>@width.ToString("N1")%</span></div>
-                <div class="confidence-track"><div class="confidence-fill" style="width:@($"{Math.Clamp(width, 0, 100)}%")"></div></div>
-            </article>
+            <section class="empty-state">
+                <strong>No positions yet.</strong>
+                <span>Use the trade ticket to add your first symbol.</span>
+            </section>
         }
-    </section>
-
-    <section class="trade-log">
-        <h2>Positions</h2>
-        <table class="ticks">
-            <thead>
-                <tr><th>Symbol</th><th>Shares</th><th>Avg Cost</th><th>Price</th><th>Value</th><th>P&amp;L</th><th>Return</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var p in snapshot.Positions)
+        else
+        {
+            <section class="allocation-list" aria-label="Portfolio allocation">
+                @foreach (var position in snapshot.Positions)
                 {
-                    <tr>
-                        <td>@p.Symbol</td>
-                        <td>@p.Shares.ToString("N4")</td>
-                        <td>@Money(p.AverageCost)</td>
-                        <td>@Money(p.CurrentPrice)</td>
-                        <td>@Money(p.MarketValue)</td>
-                        <td class="@(p.PnL >= 0 ? "up" : "down")">@Money(p.PnL)</td>
-                        <td class="@(p.PnLPercent >= 0 ? "up" : "down")">@p.PnLPercent.ToString("N2")%</td>
-                    </tr>
+                    var width = snapshot.MarketValue == 0 ? 0 : position.MarketValue / snapshot.MarketValue * 100m;
+                    <article>
+                        <div><strong>@position.Symbol</strong><span class="num">@width.ToString("N1")%</span></div>
+                        <div class="confidence-track"><div class="confidence-fill" style="width:@($"{Math.Clamp(width, 0, 100)}%")"></div></div>
+                    </article>
                 }
-            </tbody>
-        </table>
-    </section>
-}
+            </section>
+
+            <section class="surface trade-log">
+                <div class="surface-header">
+                    <h2>Positions</h2>
+                    <span class="status-pill">@snapshot.Positions.Count holdings</span>
+                </div>
+                <div class="table-wrap">
+                    <table class="ticks">
+                        <thead>
+                            <tr><th>Symbol</th><th>Shares</th><th>Avg cost</th><th>Price</th><th>Value</th><th>P&amp;L</th><th>Return</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in snapshot.Positions)
+                            {
+                                <tr>
+                                    <td>@p.Symbol</td>
+                                    <td>@p.Shares.ToString("N4")</td>
+                                    <td>@Money(p.AverageCost)</td>
+                                    <td>@Money(p.CurrentPrice)</td>
+                                    <td>@Money(p.MarketValue)</td>
+                                    <td class="@(p.PnL >= 0 ? "up" : "down")">@(p.PnL >= 0 ? "▲" : "▼") @Money(p.PnL)</td>
+                                    <td class="@(p.PnLPercent >= 0 ? "up" : "down")">@(p.PnLPercent >= 0 ? "▲" : "▼") @p.PnLPercent.ToString("N2")%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    }
+</section>
 
 @code {
     private List<PortfolioDto> portfolios = new();

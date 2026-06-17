@@ -4,19 +4,31 @@
 
 <PageTitle>Login - StockSight</PageTitle>
 
-<h1>Login</h1>
+<section class="auth-shell fade-in">
+    <div class="page-title-group">
+        <span class="eyebrow">Secure session</span>
+        <h1>Return to your market workspace.</h1>
+        <p class="page-lead">Demo credentials are prefilled so you can inspect watchlists, portfolios, alerts, and chart workflows quickly.</p>
+    </div>
 
-<section class="auth-panel">
-    <label>Email<input @bind="email" type="email" /></label>
-    <label>Password<input @bind="password" type="password" /></label>
-    <button @onclick="LoginAsync" disabled="@busy">Login</button>
-    <NavLink href="register">Create account</NavLink>
+    <div class="page-stack">
+        <section class="auth-panel">
+            <div>
+                <span class="eyebrow">Login</span>
+                <h2>Access StockSight</h2>
+            </div>
+            <label>Email<input @bind="email" type="email" autocomplete="email" /></label>
+            <label>Password<input @bind="password" type="password" autocomplete="current-password" /></label>
+            <button @onclick="LoginAsync" disabled="@busy">@(busy ? "Signing in" : "Login")</button>
+            <NavLink href="register">Create account</NavLink>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <p class="error">@error</p>
+        }
+    </div>
 </section>
-
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
 
 @code {
     private string email = "demo@stocksight.local";

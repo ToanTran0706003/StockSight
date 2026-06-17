@@ -4,39 +4,69 @@
 @inject StockHubClient Hub
 @inject AuthStateProvider Auth
 
-<PageTitle>Watchlist</PageTitle>
+<PageTitle>Watchlist - StockSight</PageTitle>
 
-<h1>Watchlist</h1>
+<section class="page-stack fade-in">
+    <header class="page-head">
+        <div class="page-title-group">
+            <span class="eyebrow">Watchlist</span>
+            <h1>Live quote board</h1>
+            <p class="page-lead">Track symbols, stream updates over SignalR, and open a full chart when a move deserves more context.</p>
+        </div>
+        <span class="status-pill @(connected ? "live" : "warn")">@statusText</span>
+    </header>
 
-<div class="controls">
-    <input @bind="newSymbol" placeholder="Symbol e.g. NVDA" />
-    <button @onclick="AddSymbolAsync" disabled="@(!connected)">Add</button>
-    <span class="status">@statusText</span>
-</div>
+    <section class="form-panel">
+        <div class="controls">
+            <input @bind="newSymbol" placeholder="Symbol e.g. NVDA" aria-label="Symbol to add" />
+            <button @onclick="AddSymbolAsync" disabled="@(!connected)">Add symbol</button>
+            <span class="status">Default list syncs with your account when signed in.</span>
+        </div>
+    </section>
 
-<section class="watchlist-grid">
-    @foreach (var symbol in symbols)
+    @if (symbols.Count == 0)
     {
-        var tick = latest.GetValueOrDefault(symbol);
-        <article class="quote-card">
-            <div>
-                <h2><NavLink href="@($"stock/{symbol}")">@symbol</NavLink></h2>
-                <span class="status">Live quote</span>
-            </div>
-            <button class="link-button" @onclick="() => RemoveSymbolAsync(symbol)">Remove</button>
-            @if (tick is null)
+        <section class="empty-state">
+            <strong>No symbols yet.</strong>
+            <span>Add a ticker above to start streaming quotes.</span>
+        </section>
+    }
+    else
+    {
+        <section class="watchlist-grid" aria-label="Live quote cards">
+            @foreach (var symbol in symbols)
             {
-                <strong class="price">Loading</strong>
+                var tick = latest.GetValueOrDefault(symbol);
+                <article class="quote-card fade-in">
+                    <div class="quote-card-head">
+                        <div>
+                            <h2 class="quote-symbol"><NavLink href="@($"stock/{symbol}")">@symbol</NavLink></h2>
+                            <span class="status">Live quote</span>
+                        </div>
+                        <button class="link-button" @onclick="() => RemoveSymbolAsync(symbol)">Remove</button>
+                    </div>
+
+                    @if (tick is null)
+                    {
+                        <span class="skeleton skeleton-price"></span>
+                        <span class="skeleton skeleton-line skeleton-short"></span>
+                    }
+                    else
+                    {
+                        <div>
+                            <strong class="price">@tick.Price.ToString("N2")</strong>
+                            <span class="change-pill @(tick.Change >= 0 ? "up" : "down")">
+                                @(tick.Change >= 0 ? "▲" : "▼") @tick.Change.ToString("N2") (@tick.ChangePercent.ToString("N2")%)
+                            </span>
+                        </div>
+                        <div class="quote-card-foot">
+                            <span class="status">@tick.TimestampUtc.ToString("HH:mm:ss") UTC</span>
+                            <NavLink class="status-pill" href="@($"stock/{symbol}")">Open chart</NavLink>
+                        </div>
+                    }
+                </article>
             }
-            else
-            {
-                <strong class="price">@tick.Price.ToString("N2")</strong>
-                <span class="@(tick.Change >= 0 ? "up" : "down")">
-                    @tick.Change.ToString("N2") (@tick.ChangePercent.ToString("N2")%)
-                </span>
-                <span class="status">@tick.TimestampUtc.ToString("HH:mm:ss") UTC</span>
-            }
-        </article>
+        </section>
     }
 </section>
 

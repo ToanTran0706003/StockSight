@@ -4,20 +4,32 @@
 
 <PageTitle>Register - StockSight</PageTitle>
 
-<h1>Register</h1>
+<section class="auth-shell fade-in">
+    <div class="page-title-group">
+        <span class="eyebrow">New workspace</span>
+        <h1>Create a trading console for your watchlist.</h1>
+        <p class="page-lead">Registration seeds a default portfolio and watchlist so the dashboard has useful market context immediately.</p>
+    </div>
 
-<section class="auth-panel">
-    <label>Display name<input @bind="displayName" /></label>
-    <label>Email<input @bind="email" type="email" /></label>
-    <label>Password<input @bind="password" type="password" /></label>
-    <button @onclick="RegisterAsync" disabled="@busy">Create account</button>
-    <NavLink href="login">I already have an account</NavLink>
+    <div class="page-stack">
+        <section class="auth-panel">
+            <div>
+                <span class="eyebrow">Register</span>
+                <h2>Start tracking</h2>
+            </div>
+            <label>Display name<input @bind="displayName" autocomplete="name" /></label>
+            <label>Email<input @bind="email" type="email" autocomplete="email" /></label>
+            <label>Password<input @bind="password" type="password" autocomplete="new-password" /></label>
+            <button @onclick="RegisterAsync" disabled="@busy">@(busy ? "Creating account" : "Create account")</button>
+            <NavLink href="login">I already have an account</NavLink>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <p class="error">@error</p>
+        }
+    </div>
 </section>
-
-@if (!string.IsNullOrWhiteSpace(error))
-{
-    <p class="error">@error</p>
-}
 
 @code {
     private string displayName = "Demo Trader";
